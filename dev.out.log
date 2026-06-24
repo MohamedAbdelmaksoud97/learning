@@ -1,0 +1,13 @@
+
+> learning@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.9 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.8.136:3000
+- Environments: .env.local
+✓ Ready in 1914ms
+Creating turbopack project { dir: 'C:\\Users\\MF\\Desktop\\learning', testMode: true }
+
+○ Compiling / ...
+ GET /login 200 in 2.5s (next.js: 1962ms, proxy.ts: 13ms, application-code: 489ms)

@@ -1,0 +1,59 @@
+"use client";
+
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { cn, getLevelLabel } from "@/lib/utils";
+import type { Lesson, Level } from "@/lib/types";
+
+const levels: Level[] = ["beginner", "advanced", "expert"];
+
+export function AdminLessonTabs({ lessons }: { lessons: Lesson[] }) {
+  const [activeLevel, setActiveLevel] = useState<Level>("beginner");
+  const visibleLessons = lessons.filter((lesson) => lesson.level === activeLevel);
+
+  return (
+    <div className="mt-8">
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 p-2">
+        {levels.map((level) => {
+          const count = lessons.filter((lesson) => lesson.level === level).length;
+          return (
+            <button
+              key={level}
+              type="button"
+              onClick={() => setActiveLevel(level)}
+              className={cn(
+                "rounded-xl px-4 py-2 text-sm font-bold transition",
+                activeLevel === level
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-950/30"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-white",
+              )}
+            >
+              {getLevelLabel(level)}
+              <span className="ms-2 rounded-full bg-slate-950/40 px-2 py-0.5 text-[11px]">{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-5 grid gap-4">
+        {visibleLessons.map((lesson) => (
+          <Card key={lesson.id} className="p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-black text-white">{lesson.title}</h2>
+                <p className="mt-2 text-sm text-slate-400">{lesson.description || "لا يوجد وصف"}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-300">ترتيب {lesson.lesson_order}</span>
+                <span className={lesson.is_active ? "rounded-full bg-emerald-400/10 px-3 py-1 text-emerald-200" : "rounded-full bg-red-400/10 px-3 py-1 text-red-200"}>
+                  {lesson.is_active ? "نشط" : "غير نشط"}
+                </span>
+              </div>
+            </div>
+          </Card>
+        ))}
+        {!visibleLessons.length ? <Card className="p-6 text-slate-400">لا توجد دروس في هذا المستوى.</Card> : null}
+      </div>
+    </div>
+  );
+}
