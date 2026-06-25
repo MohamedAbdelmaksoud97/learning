@@ -169,7 +169,7 @@ export default async function LiveSessionsPage() {
       <h1 className="text-3xl font-black">الحصص المباشرة</h1>
       <p className="mt-3 max-w-3xl text-slate-400">
         تقويم واضح لكل الحصص القادمة وروابط الانضمام. يظهر العد التنازلي تلقائيا
-        . عندما يتبقى أقل من 24 ساعة على بداية الحصة.
+        .عندما يتبقى أقل من 24 ساعة على بداية الحصة.
       </p>
 
       {sessions.length ? (
