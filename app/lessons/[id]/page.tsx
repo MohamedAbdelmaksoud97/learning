@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
+import { Brain, CheckCircle2 } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { LessonPlayer } from "@/components/LessonPlayer";
 import { LevelBadge } from "@/components/LevelBadge";
+import { buttonClassName } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/data";
 import { getAllowedLevels } from "@/lib/utils";
@@ -25,10 +27,14 @@ export default async function LessonDetailPage(props: PageProps<"/lessons/[id]">
   return (
     <AppShell profile={profile}>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <LevelBadge level={lesson.level} />
           <h1 className="mt-4 text-3xl font-black">{lesson.title}</h1>
           <p className="mt-3 max-w-3xl text-slate-400">{lesson.description}</p>
+          <Link href={`/lessons/${lesson.id}/quiz`} className={`${buttonClassName("secondary")} mt-5`}>
+            <Brain className="h-4 w-4" />
+            اختبر نفسك
+          </Link>
         </div>
         <form
           action={toggleLessonCompleted.bind(null, lesson.id, !completed)}

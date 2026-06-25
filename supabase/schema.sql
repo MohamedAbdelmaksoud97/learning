@@ -72,6 +72,26 @@ create table public.lesson_progress (
   unique(user_id, lesson_id)
 );
 
+create table public.lesson_questions (
+  id uuid primary key default gen_random_uuid(),
+  lesson_id uuid not null references public.lessons(id) on delete cascade,
+  question_text text not null,
+  explanation text,
+  question_order integer not null default 1,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table public.lesson_question_options (
+  id uuid primary key default gen_random_uuid(),
+  lesson_question_id uuid not null references public.lesson_questions(id) on delete cascade,
+  option_text text not null,
+  is_correct boolean not null default false
+);
+
+create index lesson_questions_lesson_order_idx
+  on public.lesson_questions (lesson_id, question_order);
+
 create table public.live_sessions (
   id uuid primary key default gen_random_uuid(),
   title text not null,
@@ -118,6 +138,8 @@ alter table public.test_attempts enable row level security;
 alter table public.user_answers enable row level security;
 alter table public.lessons enable row level security;
 alter table public.lesson_progress enable row level security;
+alter table public.lesson_questions enable row level security;
+alter table public.lesson_question_options enable row level security;
 alter table public.live_sessions enable row level security;
 alter table public.notifications enable row level security;
 alter table public.success_stories enable row level security;
@@ -188,6 +210,22 @@ create policy "Users manage own lesson progress" on public.lesson_progress for a
 to authenticated using ((select auth.uid()) = user_id or public.is_admin())
 with check ((select auth.uid()) = user_id or public.is_admin());
 
+create policy "Authenticated users read active lesson questions" on public.lesson_questions for select
+to authenticated using (is_active = true or public.is_admin());
+create policy "Admins manage lesson questions" on public.lesson_questions for all
+to authenticated using (public.is_admin()) with check (public.is_admin());
+create policy "Authenticated users read lesson question options" on public.lesson_question_options for select
+to authenticated using (
+  exists (
+    select 1
+    from public.lesson_questions lq
+    where lq.id = lesson_question_id
+      and (lq.is_active = true or public.is_admin())
+  )
+);
+create policy "Admins manage lesson question options" on public.lesson_question_options for all
+to authenticated using (public.is_admin()) with check (public.is_admin());
+
 create policy "Authenticated users read active live sessions" on public.live_sessions for select
 to authenticated using (is_active = true or public.is_admin());
 create policy "Admins manage live sessions" on public.live_sessions for all
@@ -207,10 +245,11 @@ create policy "Admins manage stories" on public.success_stories for all
 to authenticated using (public.is_admin()) with check (public.is_admin());
 
 grant usage on schema public to anon, authenticated;
-grant select on public.questions, public.question_options, public.lessons, public.live_sessions, public.success_stories to authenticated;
+grant select on public.questions, public.question_options, public.lessons, public.lesson_questions, public.lesson_question_options, public.live_sessions, public.success_stories to authenticated;
 grant select, insert, update on public.profiles, public.test_attempts, public.user_answers, public.lesson_progress, public.notifications to authenticated;
 grant insert, update, delete on public.lessons, public.live_sessions, public.notifications, public.success_stories to authenticated;
 grant insert, update, delete on public.questions, public.question_options to authenticated;
+grant insert, update, delete on public.lesson_questions, public.lesson_question_options to authenticated;
 
 do $$
 begin

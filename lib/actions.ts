@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { calculateLevel, formatArabicDate } from "@/lib/utils";
 import { getProfile, requireAdmin, requireUser } from "@/lib/data";
-import type { Question } from "@/lib/types";
+import type { LessonQuestion, Question } from "@/lib/types";
 
 type ActionState = { error?: string; success?: string };
 
@@ -248,6 +248,68 @@ export async function deleteQuestion(questionId: string) {
 
 export async function saveLesson(_state: ActionState, formData: FormData) {
   return upsertAdminRow("lessons", formData);
+}
+
+export async function deleteLesson(lessonId: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+  await supabase.from("lessons").delete().eq("id", lessonId);
+  revalidatePath("/admin/lessons");
+  revalidatePath("/lessons");
+  revalidatePath("/dashboard");
+}
+
+export async function saveLessonQuestion(_state: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const id = String(formData.get("id") ?? "") || randomUUID();
+  const lessonId = String(formData.get("lesson_id") ?? "");
+  const correctIndex = Number(formData.get("correct_option") ?? 0);
+  const optionTexts = [0, 1, 2, 3].map((index) => String(formData.get(`option_${index}`) ?? "").trim());
+  const questionText = String(formData.get("question_text") ?? "").trim();
+
+  if (!lessonId) return { error: "اختر الدرس المرتبط بالسؤال" };
+  if (!questionText) return { error: "اكتب نص السؤال" };
+  if (optionTexts.some((option) => !option)) return { error: "أدخل أربع إجابات" };
+  if (Number.isNaN(correctIndex) || correctIndex < 0 || correctIndex > 3) {
+    return { error: "حدد الإجابة الصحيحة" };
+  }
+
+  const { error } = await supabase.from("lesson_questions").upsert({
+    id,
+    lesson_id: lessonId,
+    question_text: questionText,
+    explanation: String(formData.get("explanation") ?? "").trim() || null,
+    question_order: Number(formData.get("question_order") ?? 1),
+    is_active: formData.get("is_active") === "on",
+  } satisfies Partial<LessonQuestion>);
+
+  if (error) return { error: error.message };
+
+  await supabase.from("lesson_question_options").delete().eq("lesson_question_id", id);
+  const { error: optionsError } = await supabase.from("lesson_question_options").insert(
+    optionTexts.map((option_text, index) => ({
+      id: randomUUID(),
+      lesson_question_id: id,
+      option_text,
+      is_correct: index === correctIndex,
+    })),
+  );
+
+  if (optionsError) return { error: optionsError.message };
+  revalidatePath("/admin/lessons");
+  revalidatePath(`/lessons/${lessonId}`);
+  revalidatePath(`/lessons/${lessonId}/quiz`);
+  return { success: "تم حفظ سؤال الدرس" };
+}
+
+export async function deleteLessonQuestion(questionId: string, lessonId: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+  await supabase.from("lesson_questions").delete().eq("id", questionId);
+  revalidatePath("/admin/lessons");
+  revalidatePath(`/lessons/${lessonId}`);
+  revalidatePath(`/lessons/${lessonId}/quiz`);
 }
 
 export async function saveLiveSession(_state: ActionState, formData: FormData) {

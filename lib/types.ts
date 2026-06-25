@@ -42,6 +42,25 @@ export type Lesson = {
   lesson_progress?: { completed: boolean; completed_at: string | null }[];
 };
 
+export type LessonQuestionOption = {
+  id: string;
+  lesson_question_id?: string;
+  option_text: string;
+  is_correct: boolean;
+};
+
+export type LessonQuestion = {
+  id: string;
+  lesson_id: string;
+  question_text: string;
+  explanation: string | null;
+  question_order: number;
+  is_active: boolean;
+  created_at: string;
+  options: LessonQuestionOption[];
+  lesson?: Pick<Lesson, "id" | "title" | "level">;
+};
+
 export type LiveSession = {
   id: string;
   title: string;

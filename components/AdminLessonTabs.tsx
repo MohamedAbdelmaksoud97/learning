@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { deleteLesson } from "@/lib/actions";
 import { cn, getLevelLabel } from "@/lib/utils";
 import type { Lesson, Level } from "@/lib/types";
 
@@ -12,7 +15,7 @@ export function AdminLessonTabs({ lessons }: { lessons: Lesson[] }) {
   const visibleLessons = lessons.filter((lesson) => lesson.level === activeLevel);
 
   return (
-    <div className="mt-8">
+    <div>
       <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 p-2">
         {levels.map((level) => {
           const count = lessons.filter((lesson) => lesson.level === level).length;
@@ -39,15 +42,27 @@ export function AdminLessonTabs({ lessons }: { lessons: Lesson[] }) {
         {visibleLessons.map((lesson) => (
           <Card key={lesson.id} className="p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
+              <div className="min-w-0">
                 <h2 className="text-lg font-black text-white">{lesson.title}</h2>
                 <p className="mt-2 text-sm text-slate-400">{lesson.description || "لا يوجد وصف"}</p>
               </div>
-              <div className="flex flex-wrap gap-2 text-xs">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-300">ترتيب {lesson.lesson_order}</span>
-                <span className={lesson.is_active ? "rounded-full bg-emerald-400/10 px-3 py-1 text-emerald-200" : "rounded-full bg-red-400/10 px-3 py-1 text-red-200"}>
+                <span
+                  className={
+                    lesson.is_active
+                      ? "rounded-full bg-emerald-400/10 px-3 py-1 text-emerald-200"
+                      : "rounded-full bg-red-400/10 px-3 py-1 text-red-200"
+                  }
+                >
                   {lesson.is_active ? "نشط" : "غير نشط"}
                 </span>
+                <form action={deleteLesson.bind(null, lesson.id)}>
+                  <Button variant="danger" size="sm">
+                    <Trash2 className="h-4 w-4" />
+                    حذف الدرس
+                  </Button>
+                </form>
               </div>
             </div>
           </Card>
