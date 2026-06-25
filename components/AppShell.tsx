@@ -7,12 +7,10 @@ import type { Profile } from "@/lib/types";
 export function AppShell({ profile, children }: { profile: Profile; children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#020617] text-slate-50">
-      <div className="flex" dir="rtl">
+      <div dir="rtl">
         <AppSidebar profile={profile} />
-        <div className="min-w-0 flex-1">
-          <TopNavbar profile={profile} />
-          <main className="mx-auto w-full max-w-7xl px-4 py-8 lg:px-8">{children}</main>
-        </div>
+        <TopNavbar profile={profile} />
+        <main className="mx-auto w-full max-w-7xl px-4 py-8 lg:px-8">{children}</main>
         <NotificationToast userId={profile.id} />
         <AccountStatusGuard userId={profile.id} />
       </div>

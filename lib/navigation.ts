@@ -2,6 +2,7 @@ export type NavIconKey =
   | "dashboard"
   | "assistant"
   | "roadmap"
+  | "challenge"
   | "lessons"
   | "live"
   | "notifications"
@@ -19,7 +20,8 @@ export type NavLink = {
 export const appNavLinks: NavLink[] = [
   { href: "/dashboard", label: "الرئيسية", icon: "dashboard" },
   { href: "/roadmap", label: "الخارطة", icon: "roadmap" },
-  { href: "/ai-chat", label: "المساعد الذكي", icon: "assistant" },
+  { href: "/challenge", label: "التحدي", icon: "challenge" },
+  { href: "/ai-chat", label: "المعلم الذكي", icon: "assistant" },
   { href: "/lessons", label: "الدروس", icon: "lessons" },
   { href: "/live-sessions", label: "الحصص المباشرة", icon: "live" },
   { href: "/notifications", label: "الإشعارات", icon: "notifications" },

@@ -5,14 +5,15 @@ import {
   BookOpen,
   Bot,
   CalendarDays,
+  Gamepad2,
   LayoutDashboard,
+  LogOut,
   Map,
   Medal,
   Settings,
   User,
   Users,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { signOut } from "@/lib/actions";
 import { getNavLinks, type NavIconKey } from "@/lib/navigation";
 import type { Profile } from "@/lib/types";
@@ -21,6 +22,7 @@ const iconMap = {
   dashboard: LayoutDashboard,
   assistant: Bot,
   roadmap: Map,
+  challenge: Gamepad2,
   lessons: BookOpen,
   live: CalendarDays,
   notifications: Bell,
@@ -30,50 +32,52 @@ const iconMap = {
   users: Users,
 } satisfies Record<NavIconKey, typeof LayoutDashboard>;
 
-export function BrandMark() {
-  return (
-    <Link href="/dashboard" className="flex items-center gap-3">
-      <Image
-        src="/logo.png"
-        alt="وصل للتطور المالي"
-        width={44}
-        height={44}
-        className="h-11 w-11 rounded-2xl bg-white object-contain p-1"
-      />
-      <div>
-        <p className="text-lg font-black text-white">وصل للتطور المالي</p>
-        <p className="text-xs text-slate-400">منصة عربية احترافية</p>
-      </div>
-    </Link>
-  );
-}
-
 export function AppSidebar({ profile }: { profile: Profile }) {
   const links = getNavLinks(profile.role);
 
   return (
-    <aside className="hidden min-h-screen w-72 shrink-0 border-l border-slate-800 bg-slate-950/80 p-5 lg:block">
-      <BrandMark />
-      <nav className="mt-10 space-y-2">
-        {links.map((item) => {
-          const Icon = iconMap[item.icon];
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-900 hover:text-white"
-            >
-              <Icon className="h-5 w-5 text-sky-300" />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
-      <form action={signOut} className="mt-10">
-        <Button variant="secondary" className="w-full">
-          تسجيل الخروج
-        </Button>
-      </form>
-    </aside>
+    <header className="sticky top-0 z-40 hidden border-b border-slate-800 bg-slate-950/95 px-5 py-2.5 backdrop-blur lg:block">
+      <div className="mx-auto flex max-w-7xl items-center gap-4">
+        <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5">
+          <Image
+            src="/logo.png"
+            alt="وصل للتطور المالي"
+            width={38}
+            height={38}
+            className="h-10 w-10 rounded-xl bg-white object-contain p-1"
+          />
+          <div>
+            <p className="text-xs font-black text-white">وصل للتطور المالي</p>
+            <p className="text-[10px] text-slate-400">منصة عربية احترافية</p>
+          </div>
+        </Link>
+
+        <nav className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto px-2">
+          {links.map((item) => {
+            const Icon = iconMap[item.icon];
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              >
+                <Icon className="h-4 w-4 text-sky-300" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <form action={signOut} className="shrink-0">
+          <button
+            type="submit"
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 text-xs font-bold text-slate-100 transition hover:border-sky-400/50 hover:bg-slate-800"
+          >
+            <LogOut className="h-3.5 w-3.5 text-sky-300" />
+            خروج
+          </button>
+        </form>
+      </div>
+    </header>
   );
 }

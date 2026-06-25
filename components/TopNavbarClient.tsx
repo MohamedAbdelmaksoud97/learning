@@ -7,6 +7,7 @@ import {
   BookOpen,
   Bot,
   CalendarDays,
+  Gamepad2,
   LayoutDashboard,
   LogOut,
   Map,
@@ -27,6 +28,7 @@ const iconMap = {
   dashboard: LayoutDashboard,
   assistant: Bot,
   roadmap: Map,
+  challenge: Gamepad2,
   lessons: BookOpen,
   live: CalendarDays,
   notifications: Bell,
@@ -48,13 +50,13 @@ export function TopNavbarClient({
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 px-4 py-4 backdrop-blur lg:px-8">
+    <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 px-4 py-4 backdrop-blur lg:hidden">
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 text-sm font-bold text-slate-100 transition active:scale-95 lg:hidden"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-700 bg-slate-900 px-3 text-xs font-bold text-slate-100 transition active:scale-95 lg:hidden"
             aria-expanded={open}
             aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}
           >
@@ -66,8 +68,8 @@ export function TopNavbarClient({
             القائمة
           </button>
           <div className="min-w-0">
-            <p className="text-sm text-slate-400">مرحبا بك</p>
-            <h1 className="truncate text-xl font-black text-white">
+            <p className="text-xs text-slate-400">مرحبا بك</p>
+            <h1 className="truncate text-lg font-black text-white">
               {profile.full_name || profile.email}
             </h1>
           </div>
@@ -86,7 +88,7 @@ export function TopNavbarClient({
               className="h-10 w-10 rounded-xl bg-white object-contain p-1"
             />
             <div>
-              <p className="text-sm font-black text-white">وصل للتطور المالي</p>
+              <p className="text-xs font-black text-white">وصل للتطور المالي</p>
               <p className="text-xs text-slate-400">روابط المنصة</p>
             </div>
           </div>
@@ -98,7 +100,7 @@ export function TopNavbarClient({
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-sm font-bold text-slate-100"
+                  className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-xs font-bold text-slate-100"
                 >
                   <Icon className="h-5 w-5 text-sky-300" />
                   {item.label}
@@ -112,7 +114,7 @@ export function TopNavbarClient({
           >
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm font-bold text-slate-100"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-xs font-bold text-slate-100"
             >
               <LogOut className="h-5 w-5 text-sky-300" />
               تسجيل الخروج
