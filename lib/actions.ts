@@ -130,37 +130,82 @@ export async function savePlacementAttempt(answers: Record<string, string>) {
   return { score: correct, percentage, finalLevel };
 }
 
-export async function markLessonCompleted(lessonId: string) {
+export async function toggleLessonWatched(lessonId: string, watched: boolean) {
   const user = await requireUser();
   const supabase = await createClient();
   await supabase.from("lesson_progress").upsert(
     {
       user_id: user.id,
       lesson_id: lessonId,
-      completed: true,
-      completed_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,lesson_id" },
-  );
-  revalidatePath("/lessons");
-  revalidatePath(`/lessons/${lessonId}`);
-}
-
-export async function toggleLessonCompleted(lessonId: string, completed: boolean) {
-  const user = await requireUser();
-  const supabase = await createClient();
-  await supabase.from("lesson_progress").upsert(
-    {
-      user_id: user.id,
-      lesson_id: lessonId,
-      completed,
-      completed_at: completed ? new Date().toISOString() : null,
+      watched,
+      watched_at: watched ? new Date().toISOString() : null,
     },
     { onConflict: "user_id,lesson_id" },
   );
   revalidatePath("/lessons");
   revalidatePath(`/lessons/${lessonId}`);
   revalidatePath("/dashboard");
+}
+
+export async function submitLessonQuiz(lessonId: string, answers: Record<string, string>) {
+  const user = await requireUser();
+  const supabase = await createClient();
+
+  const { data: questions, error } = await supabase
+    .from("lesson_questions")
+    .select("*, options:lesson_question_options(*)")
+    .eq("lesson_id", lessonId)
+    .eq("is_active", true)
+    .order("question_order");
+
+  const activeQuestions = (questions ?? []) as LessonQuestion[];
+  if (error || !activeQuestions.length) {
+    return { error: "لا توجد أسئلة متاحة لهذا الدرس حالياً" };
+  }
+
+  const total = activeQuestions.length;
+  if (Object.keys(answers).length < total) {
+    return { error: "أجب عن كل أسئلة الدرس قبل عرض النتيجة" };
+  }
+
+  const score = activeQuestions.filter((question) => {
+    const selected = answers[question.id];
+    return question.options.some((option) => option.id === selected && option.is_correct);
+  }).length;
+  const percentage = Math.round((score / total) * 100);
+  const passed = percentage === 100;
+
+  const { data: existing } = await supabase
+    .from("lesson_progress")
+    .select("completed, quiz_passed")
+    .eq("user_id", user.id)
+    .eq("lesson_id", lessonId)
+    .maybeSingle<{ completed: boolean; quiz_passed: boolean | null }>();
+
+  const alreadyPassed = Boolean(existing?.completed || existing?.quiz_passed);
+  const shouldComplete = passed || alreadyPassed;
+
+  await supabase.from("lesson_progress").upsert(
+    {
+      user_id: user.id,
+      lesson_id: lessonId,
+      completed: shouldComplete,
+      completed_at: shouldComplete ? new Date().toISOString() : null,
+      quiz_score: score,
+      quiz_total: total,
+      quiz_percentage: percentage,
+      quiz_passed: shouldComplete,
+    },
+    { onConflict: "user_id,lesson_id" },
+  );
+
+  revalidatePath("/lessons");
+  revalidatePath(`/lessons/${lessonId}`);
+  revalidatePath(`/lessons/${lessonId}/quiz`);
+  revalidatePath("/dashboard");
+  revalidatePath("/roadmap");
+
+  return { score, total, percentage, passed: shouldComplete };
 }
 
 export async function markNotificationRead(id: string) {

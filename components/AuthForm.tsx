@@ -29,12 +29,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <ArrowLeft className="h-4 w-4" />
         </Button>
       </form>
-      <p className="mt-5 text-center text-sm text-slate-400">
-        {mode === "login" ? "ليس لديك حساب؟ " : "لديك حساب بالفعل؟ "}
-        <Link href={mode === "login" ? "/signup" : "/login"} className="font-bold text-sky-300">
-          {mode === "login" ? "أنشئ حسابا" : "تسجيل الدخول"}
-        </Link>
-      </p>
+      {mode === "signup" ? (
+        <p className="mt-5 text-center text-sm text-slate-400">
+          لديك حساب بالفعل؟{" "}
+          <Link href="/login" className="font-bold text-sky-300">
+            تسجيل الدخول
+          </Link>
+        </p>
+      ) : null}
     </Card>
   );
 }

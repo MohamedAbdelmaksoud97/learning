@@ -7,7 +7,10 @@ import {
   LineChart,
   ShieldCheck,
 } from "lucide-react";
+import { SuccessStoryCard } from "@/components/SuccessStoryCard";
 import { buttonClassName } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
+import type { SuccessStory } from "@/lib/types";
 
 const features = [
   {
@@ -34,7 +37,17 @@ const stats = [
   ["24/7", "وصول للمنصة"],
 ];
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const { data: stories } = await supabase
+    .from("success_stories")
+    .select("id,student_name,title,description,score,image_url,is_published,created_at")
+    .eq("is_published", true)
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  const publishedStories = (stories ?? []) as SuccessStory[];
+
   return (
     <main
       className="min-h-screen overflow-hidden bg-[#020617] text-slate-50"
@@ -64,13 +77,13 @@ export default function Home() {
       <section className="mx-auto grid min-h-[calc(100vh-92px)] max-w-7xl items-center gap-10 px-5 pb-16 lg:grid-cols-[1fr_0.92fr]">
         <div>
           <p className="mb-5 inline-flex rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-2 text-sm font-bold text-sky-200">
-            منصة عربية لتعليم التداول بطريقة عملية ومنظمة
+            وجهتك الاولى للاستثمار والتعليم المالي
           </p>
           <h1 className="max-w-3xl text-4xl font-black leading-tight text-white md:text-6xl">
             تعلم التداول بثقة من الأساسيات إلى قراءة السوق وإدارة المخاطر
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-400">
-            منصة تعليمية عربية تساعدك على بناء فهم واضح للتداول خطوة بخطوة، مع
+            اول منصه تعليميه سعوديه تساعدك على بناء فهم واضح للتداول خطوة بخطوة، مع
             دروس مرتبة حسب المستوى، اختبارات قصيرة، حصص مباشرة، ومساعد ذكي يجيب
             عن أسئلتك أثناء التعلم.
           </p>
@@ -149,6 +162,40 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {publishedStories.length ? (
+        <section className="mx-auto max-w-7xl px-5 pb-12">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-sky-300">قصص حقيقية من طلابنا</p>
+              <h2 className="mt-2 text-3xl font-black text-white">قصص النجاح</h2>
+            </div>
+            <Link href="/login" className="text-sm font-bold text-sky-300 transition hover:text-sky-200">
+              ابدأ رحلتك الآن
+            </Link>
+          </div>
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {publishedStories.map((story) => (
+              <SuccessStoryCard key={story.id} story={story} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="mx-auto max-w-7xl px-5 pb-12">
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-slate-800 bg-[#0F172A]/80 p-8 text-center shadow-2xl shadow-blue-950/20">
+          <Image
+            src="/maroof.png"
+            alt="معروف"
+            width={180}
+            height={126}
+            className="h-auto w-44 object-contain"
+          />
+          <p className="mt-4 text-base font-black text-white">
+            موثقين في معروف : 311971
+          </p>
         </div>
       </section>
     </main>

@@ -7,7 +7,16 @@ import { CheckCircle2, RotateCcw, XCircle } from "lucide-react";
 import { AnimatedProgressBar } from "@/components/AnimatedProgressBar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { submitLessonQuiz } from "@/lib/actions";
 import type { LessonQuestion } from "@/lib/types";
+
+type QuizResult = {
+  score: number;
+  total: number;
+  percentage: number;
+  passed: boolean;
+  error?: string;
+};
 
 export function LessonQuizClient({
   lessonId,
@@ -19,7 +28,10 @@ export function LessonQuizClient({
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, boolean>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [finished, setFinished] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [result, setResult] = useState<QuizResult | null>(null);
 
   const question = questions[index];
   const correctOption = question.options.find((option) => option.is_correct);
@@ -36,13 +48,30 @@ export function LessonQuizClient({
     const correct = question.options.some((option) => option.id === optionId && option.is_correct);
     setSelected(optionId);
     setAnswers((current) => ({ ...current, [question.id]: correct }));
+    setSelectedAnswers((current) => ({ ...current, [question.id]: optionId }));
   }
 
-  function next() {
+  async function next() {
     if (index < questions.length - 1) {
       setIndex((value) => value + 1);
       setSelected(null);
       return;
+    }
+
+    setSaving(true);
+    const saved = await submitLessonQuiz(lessonId, selectedAnswers);
+    setSaving(false);
+
+    if ("error" in saved) {
+      setResult({
+        score,
+        total: questions.length,
+        percentage: Math.round((score / questions.length) * 100),
+        passed: false,
+        error: saved.error,
+      });
+    } else {
+      setResult(saved);
     }
     setFinished(true);
   }
@@ -51,13 +80,23 @@ export function LessonQuizClient({
     setIndex(0);
     setSelected(null);
     setAnswers({});
+    setSelectedAnswers({});
     setFinished(false);
+    setResult(null);
   }
 
   if (finished) {
-    const percentage = Math.round((score / questions.length) * 100);
+    const percentage = result?.percentage ?? Math.round((score / questions.length) * 100);
+    const finalScore = result?.score ?? score;
+    const finalTotal = result?.total ?? questions.length;
+    const passed = Boolean(result?.passed);
+
     return (
-      <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-2xl">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="mx-auto max-w-2xl"
+      >
         <Card className="p-10 text-center">
           <p className="text-sm font-bold text-sky-300">نتيجة اختبار الدرس</p>
           <motion.p
@@ -68,8 +107,14 @@ export function LessonQuizClient({
             {percentage}%
           </motion.p>
           <p className="mt-4 text-xl text-slate-300">
-            أجبت بشكل صحيح على {score} من {questions.length}
+            أجبت بشكل صحيح على {finalScore} من {finalTotal}
           </p>
+          <p className={passed ? "mt-4 font-bold text-emerald-300" : "mt-4 font-bold text-amber-300"}>
+            {passed
+              ? "ممتاز. تم فتح الدرس التالي."
+              : "يجب الحصول على 100% لفتح الدرس التالي. أعد الاختبار وحاول مرة أخرى."}
+          </p>
+          {result?.error ? <p className="mt-3 text-sm text-red-300">{result.error}</p> : null}
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button onClick={restart} variant="secondary">
               <RotateCcw className="h-4 w-4" />
@@ -148,8 +193,12 @@ export function LessonQuizClient({
               </motion.div>
             ) : null}
             <div className="mt-6 flex justify-end">
-              <Button onClick={next} disabled={!isAnswered}>
-                {index === questions.length - 1 ? "عرض النتيجة" : "السؤال التالي"}
+              <Button onClick={next} disabled={!isAnswered || saving}>
+                {saving
+                  ? "جاري الحفظ..."
+                  : index === questions.length - 1
+                    ? "عرض النتيجة"
+                    : "السؤال التالي"}
               </Button>
             </div>
           </Card>

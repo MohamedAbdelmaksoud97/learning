@@ -41,7 +41,17 @@ export type Lesson = {
   duration_minutes: number | null;
   is_active: boolean;
   created_at: string;
-  lesson_progress?: { completed: boolean; completed_at: string | null }[];
+  is_locked?: boolean;
+  lesson_progress?: {
+    watched?: boolean;
+    watched_at?: string | null;
+    completed: boolean;
+    completed_at: string | null;
+    quiz_score?: number | null;
+    quiz_total?: number | null;
+    quiz_percentage?: number | null;
+    quiz_passed?: boolean;
+  }[];
 };
 
 export type LessonVocabularyItem = {

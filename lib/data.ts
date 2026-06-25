@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { applyLessonLocks } from "@/lib/lesson-locks";
 import { getAllowedLevels } from "@/lib/utils";
 import type { Level, Profile } from "@/lib/types";
 
@@ -87,10 +88,11 @@ export async function getDashboardData() {
       .order("completed_at", { ascending: false }),
   ]);
 
-  const totalLessons = lessons.data?.length ?? 0;
+  const lockedLessons = applyLessonLocks(lessons.data ?? []);
+  const totalLessons = lockedLessons.length;
   const completedCount =
-    lessons.data?.filter((lesson) => lesson.lesson_progress?.[0]?.completed).length ?? 0;
-  const nextLesson = lessons.data?.find((lesson) => !lesson.lesson_progress?.[0]?.completed);
+    lockedLessons.filter((lesson) => lesson.lesson_progress?.[0]?.completed).length ?? 0;
+  const nextLesson = lockedLessons.find((lesson) => !lesson.lesson_progress?.[0]?.completed);
   const completedDates = progressRows.data?.map((row) => row.completed_at as string) ?? [];
 
   return {
@@ -100,7 +102,7 @@ export async function getDashboardData() {
     completedCount,
     progress: totalLessons ? Math.round((completedCount / totalLessons) * 100) : 0,
     nextLesson,
-    lessons: lessons.data ?? [],
+    lessons: lockedLessons,
     completedDates,
     liveSession: live.data,
     notification: notification.data,
@@ -117,5 +119,5 @@ export async function getLessonsForLevel(level: Level | null) {
     .eq("is_active", true)
     .order("level")
     .order("lesson_order");
-  return data ?? [];
+  return applyLessonLocks(data ?? []);
 }

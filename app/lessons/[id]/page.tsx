@@ -11,8 +11,9 @@ import { LessonContentTabs } from "@/components/LessonContentTabs";
 import { LevelBadge } from "@/components/LevelBadge";
 import { buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { toggleLessonCompleted } from "@/lib/actions";
+import { toggleLessonWatched } from "@/lib/actions";
 import { getProfile } from "@/lib/data";
+import { isLessonUnlocked } from "@/lib/lesson-locks";
 import { createClient } from "@/lib/supabase/server";
 import type { LessonVocabularyItem } from "@/lib/types";
 import { getAllowedLevels } from "@/lib/utils";
@@ -45,7 +46,7 @@ export default async function LessonDetailPage(
   const supabase = await createClient();
   const { data: lesson } = await supabase
     .from("lessons")
-    .select("*, lesson_progress(completed, completed_at)")
+    .select("*, lesson_progress(watched, watched_at, completed, completed_at, quiz_score, quiz_total, quiz_percentage, quiz_passed)")
     .eq("id", id)
     .eq("is_active", true)
     .single();
@@ -54,7 +55,20 @@ export default async function LessonDetailPage(
     notFound();
   }
 
+  const { data: availableLessons } = await supabase
+    .from("lessons")
+    .select("id,level,lesson_order,lesson_progress(completed,completed_at)")
+    .in("level", getAllowedLevels(profile.level))
+    .eq("is_active", true)
+    .order("level")
+    .order("lesson_order");
+
+  if (!isLessonUnlocked(lesson.id, availableLessons ?? [])) {
+    notFound();
+  }
+
   const completed = Boolean(lesson.lesson_progress?.[0]?.completed);
+  const watched = Boolean(lesson.lesson_progress?.[0]?.watched);
   const vocabulary = normalizeVocabulary(lesson.vocabulary);
 
   return (
@@ -95,7 +109,7 @@ export default async function LessonDetailPage(
                 </p>
               </div>
               <form
-                action={toggleLessonCompleted.bind(null, lesson.id, !completed)}
+                action={toggleLessonWatched.bind(null, lesson.id, !watched)}
                 className="rounded-2xl border border-slate-800 bg-slate-950/50 p-5 text-center"
               >
                 <p className="text-sm font-bold text-slate-400">
@@ -105,15 +119,20 @@ export default async function LessonDetailPage(
                   type="submit"
                   className={[
                     "mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-black transition",
-                    completed
+                    watched
                       ? "bg-emerald-400 text-emerald-950"
                       : "bg-blue-600 text-white hover:bg-blue-500",
                   ].join(" ")}
-                  aria-pressed={completed}
+                  aria-pressed={watched}
                 >
                   <CheckCircle2 className="h-4 w-4" />
-                  {completed ? "تمت المشاهدة" : "تحديد كمشاهد"}
+                  {watched ? "تمت المشاهدة" : "تحديد كمشاهد"}
                 </button>
+                {!completed ? (
+                  <p className="mt-3 text-xs leading-5 text-slate-500">
+                    الدرس التالي يفتح بعد اجتياز الاختبار بنسبة 100%.
+                  </p>
+                ) : null}
               </form>
             </div>
           </div>

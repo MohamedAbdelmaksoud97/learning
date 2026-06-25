@@ -22,7 +22,6 @@ export const appNavLinks: NavLink[] = [
   { href: "/roadmap", label: "الخارطة", icon: "roadmap" },
   { href: "/challenge", label: "التحدي", icon: "challenge" },
   { href: "/ai-chat", label: "المعلم الذكي", icon: "assistant" },
-  { href: "/lessons", label: "الدروس", icon: "lessons" },
   { href: "/live-sessions", label: "الحصص المباشرة", icon: "live" },
   { href: "/notifications", label: "الإشعارات", icon: "notifications" },
   { href: "/success-stories", label: "قصص النجاح", icon: "stories" },

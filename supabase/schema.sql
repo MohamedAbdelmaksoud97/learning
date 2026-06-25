@@ -68,8 +68,14 @@ create table public.lesson_progress (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   lesson_id uuid not null references public.lessons(id) on delete cascade,
+  watched boolean not null default false,
+  watched_at timestamptz,
   completed boolean not null default false,
   completed_at timestamptz,
+  quiz_score integer,
+  quiz_total integer,
+  quiz_percentage integer,
+  quiz_passed boolean not null default false,
   created_at timestamptz not null default now(),
   unique(user_id, lesson_id)
 );
@@ -243,10 +249,13 @@ to authenticated with check (public.is_admin());
 
 create policy "Authenticated users read published stories" on public.success_stories for select
 to authenticated using (is_published = true or public.is_admin());
+create policy "Anyone can read published stories" on public.success_stories for select
+to anon using (is_published = true);
 create policy "Admins manage stories" on public.success_stories for all
 to authenticated using (public.is_admin()) with check (public.is_admin());
 
 grant usage on schema public to anon, authenticated;
+grant select on public.success_stories to anon;
 grant select on public.questions, public.question_options, public.lessons, public.lesson_questions, public.lesson_question_options, public.live_sessions, public.success_stories to authenticated;
 grant select, insert, update on public.profiles, public.test_attempts, public.user_answers, public.lesson_progress, public.notifications to authenticated;
 grant insert, update, delete on public.lessons, public.live_sessions, public.notifications, public.success_stories to authenticated;

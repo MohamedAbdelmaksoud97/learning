@@ -11,6 +11,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { getProfile } from "@/lib/data";
+import { applyLessonLocks, isLessonCompleted } from "@/lib/lesson-locks";
 import { createClient } from "@/lib/supabase/server";
 import type { Level } from "@/lib/types";
 import { getAllowedLevels } from "@/lib/utils";
@@ -20,6 +21,7 @@ type RoadmapLesson = {
   level: Level;
   title: string;
   lesson_order: number;
+  is_locked?: boolean;
   lesson_progress?: { completed: boolean; completed_at: string | null }[];
 };
 
@@ -61,10 +63,6 @@ const levelConfigs: LevelConfig[] = [
 
 function percent(completed: number, total: number) {
   return total ? Math.round((completed / total) * 100) : 0;
-}
-
-function isCompleted(lesson: RoadmapLesson) {
-  return lesson.lesson_progress?.some((progress) => progress.completed) ?? false;
 }
 
 function chunkLessons(lessons: RoadmapLesson[], size: number) {
@@ -123,20 +121,18 @@ export default async function RoadmapPage() {
     .order("level")
     .order("lesson_order");
 
-  const lessons = ((data ?? []) as RoadmapLesson[]).sort(
-    (first, second) => first.lesson_order - second.lesson_order,
-  );
+  const lessons = applyLessonLocks((data ?? []) as RoadmapLesson[]);
 
-  const completedLessons = lessons.filter(isCompleted).length;
+  const completedLessons = lessons.filter(isLessonCompleted).length;
   const totalLessons = lessons.length;
   const overallProgress = percent(completedLessons, totalLessons);
   const availableLessons = lessons.filter((lesson) =>
     allowedLevels.includes(lesson.level),
   );
-  const availableCompleted = availableLessons.filter(isCompleted).length;
+  const availableCompleted = availableLessons.filter(isLessonCompleted).length;
   const lockedLessons = lessons.length - availableLessons.length;
   const currentLessons = lessons.filter((lesson) => lesson.level === currentLevel);
-  const currentCompleted = currentLessons.filter(isCompleted).length;
+  const currentCompleted = currentLessons.filter(isLessonCompleted).length;
   const currentProgress = percent(currentCompleted, currentLessons.length);
   const lessonsLeft = Math.max(0, currentLessons.length - currentCompleted);
   const currentConfig =
@@ -239,7 +235,7 @@ export default async function RoadmapPage() {
         <div className="space-y-5">
           {weeklyLessons.length ? (
             weeklyLessons.map((week, index) => {
-              const weekCompleted = week.filter(isCompleted).length;
+              const weekCompleted = week.filter(isLessonCompleted).length;
               const weekProgress = percent(weekCompleted, week.length);
 
               return (
@@ -265,20 +261,23 @@ export default async function RoadmapPage() {
 
                   <div className="space-y-3 p-5">
                     {week.map((lesson, lessonIndex) => {
-                      const completed = isCompleted(lesson);
+                      const completed = isLessonCompleted(lesson);
                       const firstUnfinished =
                         !completed &&
-                        currentLessons.find((item) => !isCompleted(item))?.id ===
+                        currentLessons.find((item) => !isLessonCompleted(item))?.id ===
                           lesson.id;
+                      const locked = Boolean(lesson.is_locked);
 
                       return (
                         <Link
                           key={lesson.id}
-                          href={`/lessons/${lesson.id}`}
+                          href={locked ? "/roadmap" : `/lessons/${lesson.id}`}
                           className={[
                             "flex items-center justify-between gap-4 rounded-2xl border p-4 transition hover:-translate-y-0.5",
                             completed
                               ? "border-emerald-500/35 bg-emerald-500/10"
+                              : locked
+                                ? "border-slate-700 bg-slate-900/50 opacity-70"
                               : firstUnfinished
                                 ? "border-amber-500/60 bg-amber-500/10 shadow-lg shadow-amber-950/20"
                                 : "border-slate-700 bg-slate-800/70",
@@ -288,7 +287,7 @@ export default async function RoadmapPage() {
                             <span
                               className={[
                                 "grid h-12 w-12 place-items-center rounded-full text-lg font-black text-white",
-                                completed ? "bg-emerald-500" : "bg-teal-500",
+                                completed ? "bg-emerald-500" : locked ? "bg-slate-700" : "bg-teal-500",
                               ].join(" ")}
                             >
                               {index * 7 + lessonIndex + 1}
@@ -298,12 +297,14 @@ export default async function RoadmapPage() {
                                 {lesson.title}
                               </h4>
                               <p className="mt-1 text-sm text-slate-400">
-                                اضغط لفتح الدرس
+                                {locked ? "اجتز اختبار الدرس السابق 100% لفتحه" : "اضغط لفتح الدرس"}
                               </p>
                             </div>
                           </div>
                           {completed ? (
                             <CheckCircle2 className="h-6 w-6 text-emerald-300" />
+                          ) : locked ? (
+                            <Lock className="h-5 w-5 text-slate-400" />
                           ) : firstUnfinished ? (
                             <Flame className="h-6 w-6 text-amber-300" />
                           ) : (
@@ -333,7 +334,7 @@ export default async function RoadmapPage() {
               const levelLessons = lessons.filter(
                 (lesson) => lesson.level === config.level,
               );
-              const levelCompleted = levelLessons.filter(isCompleted).length;
+              const levelCompleted = levelLessons.filter(isLessonCompleted).length;
               const levelProgress = percent(levelCompleted, levelLessons.length);
               const unlocked = allowedLevels.includes(config.level);
               const isFuture =

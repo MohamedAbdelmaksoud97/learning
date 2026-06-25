@@ -11,9 +11,12 @@ export const metadata: Metadata = {
   title: "وصل للتطور المالي",
   description: "منصة عربية احترافية لتعليم التداول",
   icons: {
-    icon: "/logo.png",
+    icon: [
+      { url: "/logo.png", type: "image/png", sizes: "32x32" },
+      { url: "/logo.png", type: "image/png", sizes: "192x192" },
+    ],
     shortcut: "/logo.png",
-    apple: "/logo.png",
+    apple: [{ url: "/logo.png", type: "image/png", sizes: "180x180" }],
   },
 };
 
