@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
   Bell,
   BookOpen,
@@ -10,61 +11,61 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { signOut } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
+import { signOut } from "@/lib/actions";
+import { getNavLinks, type NavIconKey } from "@/lib/navigation";
 import type { Profile } from "@/lib/types";
 
-const links = [
-  { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
-  { href: "/ai-chat", label: "المساعد الذكي", icon: Bot },
-  { href: "/lessons", label: "الدروس", icon: BookOpen },
-  { href: "/live-sessions", label: "الحصص المباشرة", icon: CalendarDays },
-  { href: "/notifications", label: "الإشعارات", icon: Bell },
-  { href: "/success-stories", label: "قصص النجاح", icon: Medal },
-  { href: "/profile", label: "الملف الشخصي", icon: User },
-];
+const iconMap = {
+  dashboard: LayoutDashboard,
+  assistant: Bot,
+  lessons: BookOpen,
+  live: CalendarDays,
+  notifications: Bell,
+  stories: Medal,
+  profile: User,
+  admin: Settings,
+  users: Users,
+} satisfies Record<NavIconKey, typeof LayoutDashboard>;
+
+export function BrandMark() {
+  return (
+    <Link href="/dashboard" className="flex items-center gap-3">
+      <Image
+        src="/logo.png"
+        alt="تعلم التداول"
+        width={44}
+        height={44}
+        className="h-11 w-11 rounded-2xl bg-white object-contain p-1"
+      />
+      <div>
+        <p className="text-lg font-black text-white">استاذة حصه </p>
+        <p className="text-xs text-slate-400">منصة عربية احترافية</p>
+      </div>
+    </Link>
+  );
+}
 
 export function AppSidebar({ profile }: { profile: Profile }) {
+  const links = getNavLinks(profile.role);
+
   return (
     <aside className="hidden min-h-screen w-72 shrink-0 border-l border-slate-800 bg-slate-950/80 p-5 lg:block">
-      <Link href="/dashboard" className="flex items-center gap-3">
-        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-600 text-lg font-black text-white">
-          ع
-        </span>
-        <div>
-          <p className="text-lg font-black text-white">استاذة حصه</p>
-          <p className="text-xs text-slate-400">تعلم عربي احترافي</p>
-        </div>
-      </Link>
+      <BrandMark />
       <nav className="mt-10 space-y-2">
-        {links.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-900 hover:text-white"
-          >
-            <item.icon className="h-5 w-5 text-sky-300" />
-            {item.label}
-          </Link>
-        ))}
-        {profile.role === "admin" ? (
-          <>
+        {links.map((item) => {
+          const Icon = iconMap[item.icon];
+          return (
             <Link
-              href="/admin"
+              key={item.href}
+              href={item.href}
               className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-900 hover:text-white"
             >
-              <Settings className="h-5 w-5 text-sky-300" />
-              الإدارة
+              <Icon className="h-5 w-5 text-sky-300" />
+              {item.label}
             </Link>
-            <Link
-              href="/admin/users"
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-slate-300 transition hover:bg-slate-900 hover:text-white"
-            >
-              <Users className="h-5 w-5 text-sky-300" />
-              إدارة الحسابات
-            </Link>
-          </>
-        ) : null}
+          );
+        })}
       </nav>
       <form action={signOut} className="mt-10">
         <Button variant="secondary" className="w-full">

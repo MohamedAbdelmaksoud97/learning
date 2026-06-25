@@ -1,5 +1,6 @@
+import { TopNavbarClient } from "@/components/TopNavbarClient";
 import { createClient } from "@/lib/supabase/server";
-import { NotificationBell } from "@/components/NotificationBell";
+import { getNavLinks } from "@/lib/navigation";
 import type { Profile } from "@/lib/types";
 
 export async function TopNavbar({ profile }: { profile: Profile }) {
@@ -11,14 +12,10 @@ export async function TopNavbar({ profile }: { profile: Profile }) {
     .eq("is_read", false);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-800 bg-slate-950/80 px-4 py-4 backdrop-blur lg:px-8">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-slate-400">مرحبا بك</p>
-          <h1 className="text-xl font-black text-white">{profile.full_name || profile.email}</h1>
-        </div>
-        <NotificationBell unreadCount={count ?? 0} userId={profile.id} />
-      </div>
-    </header>
+    <TopNavbarClient
+      profile={profile}
+      unreadCount={count ?? 0}
+      links={getNavLinks(profile.role)}
+    />
   );
 }
