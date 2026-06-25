@@ -9,7 +9,7 @@ const cairo = Cairo({
 
 export const metadata: Metadata = {
   title: "وصل للتطور المالي",
-  description: "منصة عربية احترافية لتعليم التداول",
+  description: "وجهتك الاولى للاستثمار",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

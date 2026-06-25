@@ -48,7 +48,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
           />
           <div>
             <p className="text-xs font-black text-white">وصل للتطور المالي</p>
-            <p className="text-[10px] text-slate-400">منصة عربية احترافية</p>
+            <p className="text-[10px] text-slate-400">وجهتك الاولى للاستثمار</p>
           </div>
         </Link>
 
