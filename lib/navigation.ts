@@ -16,7 +16,7 @@ export type NavLink = {
 };
 
 export const appNavLinks: NavLink[] = [
-  { href: "/dashboard", label: "لوحة التحكم", icon: "dashboard" },
+  { href: "/dashboard", label: "الرئيسية", icon: "dashboard" },
   { href: "/ai-chat", label: "المساعد الذكي", icon: "assistant" },
   { href: "/lessons", label: "الدروس", icon: "lessons" },
   { href: "/live-sessions", label: "الحصص المباشرة", icon: "live" },

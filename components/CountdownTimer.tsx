@@ -20,7 +20,7 @@ export function CountdownTimer({ startTime }: { startTime: string }) {
 
   if (diff === 0) return null;
   return (
-    <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold text-cyan-200">
+    <span className="rounded-full bg-cyan-400/10 px-3 py-1 text-lg font-bold text-cyan-200">
       يبدأ خلال {hours}س {minutes}د {seconds}ث
     </span>
   );

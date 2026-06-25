@@ -84,7 +84,10 @@ export function TopNavbarClient({
               className="h-10 w-10 rounded-xl bg-white object-contain p-1"
             />
             <div>
-              <p className="text-sm font-black text-white">استاذة حصه </p>
+              <p className="text-sm font-black text-white">
+                {" "}
+                وصل للتطور المالي{" "}
+              </p>
               <p className="text-xs text-slate-400">روابط المنصة</p>
             </div>
           </div>

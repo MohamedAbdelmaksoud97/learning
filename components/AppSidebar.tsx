@@ -39,7 +39,7 @@ export function BrandMark() {
         className="h-11 w-11 rounded-2xl bg-white object-contain p-1"
       />
       <div>
-        <p className="text-lg font-black text-white">استاذة حصه </p>
+        <p className="text-lg font-black text-white"> وصل للتطور المالي </p>
         <p className="text-xs text-slate-400">منصة عربية احترافية</p>
       </div>
     </Link>

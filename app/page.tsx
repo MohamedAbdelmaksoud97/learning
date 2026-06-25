@@ -50,7 +50,7 @@ export default function Home() {
             height={44}
             className="h-11 w-11 rounded-2xl bg-white object-contain p-1"
           />
-          <span className="text-lg font-black">استاذة حصه </span>
+          <span className="text-lg font-black"> وصل للتطور المالي </span>
         </Link>
         <div className="flex gap-3">
           <Link
