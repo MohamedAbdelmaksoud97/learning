@@ -1,24 +1,50 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { createClient } from "@/lib/supabase/server";
+
+export const runtime = "nodejs";
 
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
 
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-3.5-flash";
 const MAX_MESSAGES = 12;
+const KNOWLEDGE_FILE_PATH = path.join(
+  process.cwd(),
+  "knowledge",
+  "ai-lessons-guide.pdf",
+);
 const SYSTEM_INSTRUCTION = [
-  "أنت مساعد تعليمي عربي داخل منصة تعليمية.",
-  "أجب بالعربية الفصحى المبسطة، وكن واضحا ومباشرا ومشجعا بدون مبالغة.",
-  "إذا طلب الطالب حل واجب أو اختبار، ساعده على الفهم خطوة بخطوة بدلا من إعطاء الإجابة فقط.",
-  "لا تخترع معلومات عن محتوى المنصة أو الدروس إذا لم يتم تزويدك بها.",
+  "أنت معلم ذكي داخل منصة عربية لتعليم التداول.",
+  "اعتمد في إجاباتك أولاً على ملف الدليل المرفق في الطلب.",
+  "إذا كان السؤال خارج محتوى الدليل، قل بوضوح: لا توجد هذه المعلومة في الدليل، ثم قدم مساعدة عامة مختصرة إذا كانت مفيدة.",
+  "أجب بالعربية الواضحة المبسطة، وبأسلوب تعليمي عملي.",
+  "لا تخترع تفاصيل أو دروس أو قواعد غير موجودة في الدليل.",
 ].join("\n");
+
+let cachedGuideBase64: string | null = null;
+
+async function getGuideBase64() {
+  cachedGuideBase64 ??= await readFile(KNOWLEDGE_FILE_PATH, {
+    encoding: "base64",
+  });
+  return cachedGuideBase64;
+}
 
 function buildInput(messages: ChatMessage[]) {
   const recentMessages = messages.slice(-MAX_MESSAGES);
-  return recentMessages
-    .map((message) => `${message.role === "user" ? "الطالب" : "المساعد"}: ${message.content}`)
-    .join("\n\n");
+  return [
+    "استخدم ملف الدليل المرفق كمصدر المعرفة الأساسي.",
+    "هذه هي المحادثة الحالية:",
+    recentMessages
+      .map((message) =>
+        `${message.role === "user" ? "الطالب" : "المعلم الذكي"}: ${message.content}`,
+      )
+      .join("\n\n"),
+    "أجب على آخر رسالة من الطالب فقط.",
+  ].join("\n\n");
 }
 
 function extractTextFromEvent(payload: unknown) {
@@ -68,6 +94,14 @@ export async function POST(request: Request) {
     return Response.json({ error: "Message is required" }, { status: 400 });
   }
 
+  const guideBase64 = await getGuideBase64().catch(() => null);
+  if (!guideBase64) {
+    return Response.json(
+      { error: "Knowledge PDF is missing or unreadable" },
+      { status: 500 },
+    );
+  }
+
   const geminiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions?alt=sse", {
     method: "POST",
     headers: {
@@ -77,10 +111,21 @@ export async function POST(request: Request) {
     body: JSON.stringify({
       model: GEMINI_MODEL,
       system_instruction: SYSTEM_INSTRUCTION,
-      input: buildInput(messages),
+      input: [
+        {
+          type: "document",
+          data: guideBase64,
+          mime_type: "application/pdf",
+        },
+        {
+          type: "text",
+          text: buildInput(messages),
+        },
+      ],
       stream: true,
+      store: false,
       generation_config: {
-        temperature: 0.7,
+        temperature: 0.35,
         thinking_level: "low",
       },
     }),
