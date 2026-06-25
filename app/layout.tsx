@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "استاذة حصة ",
+  title: "وصل للتطور المالي",
   description: "منصة عربية احترافية لتعليم التداول",
   icons: {
     icon: "/logo.png",
