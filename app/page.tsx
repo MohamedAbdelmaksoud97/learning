@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import {
-  ArrowLeft,
   BarChart3,
   BookOpenCheck,
   CalendarDays,
@@ -55,15 +54,9 @@ export default function Home() {
         <div className="flex gap-3">
           <Link
             href="/login"
-            className="text-sm font-bold text-slate-300 hover:text-white"
+            className={buttonClassName("default")}
           >
             دخول
-          </Link>
-          <Link
-            href="/signup"
-            className="text-sm font-bold text-sky-300 hover:text-sky-200"
-          >
-            حساب جديد
           </Link>
         </div>
       </nav>
@@ -82,9 +75,6 @@ export default function Home() {
             عن أسئلتك أثناء التعلم.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/signup" className={buttonClassName("default")}>
-              ابدأ التعلم الآن <ArrowLeft className="h-4 w-4" />
-            </Link>
             <Link href="/login" className={buttonClassName("secondary")}>
               لدي حساب
             </Link>
