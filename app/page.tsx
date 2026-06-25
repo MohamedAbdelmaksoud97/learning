@@ -60,7 +60,7 @@ export default async function Home() {
             alt="تعلم التداول"
             width={44}
             height={44}
-            className="h-11 w-11 rounded-2xl bg-white object-contain p-1"
+            className="h-11 w-11 object-contain"
           />
           <span className="text-lg font-black"> وصل للتطور المالي </span>
         </Link>

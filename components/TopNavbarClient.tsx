@@ -85,7 +85,7 @@ export function TopNavbarClient({
               alt="وصل للتطور المالي"
               width={40}
               height={40}
-              className="h-10 w-10 rounded-xl bg-white object-contain p-1"
+              className="h-10 w-10 object-contain"
             />
             <div>
               <p className="text-xs font-black text-white">وصل للتطور المالي</p>
