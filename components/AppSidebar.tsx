@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Bell,
   BookOpen,
+  Bot,
   CalendarDays,
   LayoutDashboard,
   Medal,
@@ -15,6 +16,7 @@ import type { Profile } from "@/lib/types";
 
 const links = [
   { href: "/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
+  { href: "/ai-chat", label: "المساعد الذكي", icon: Bot },
   { href: "/lessons", label: "الدروس", icon: BookOpen },
   { href: "/live-sessions", label: "الحصص المباشرة", icon: CalendarDays },
   { href: "/notifications", label: "الإشعارات", icon: Bell },
@@ -30,7 +32,7 @@ export function AppSidebar({ profile }: { profile: Profile }) {
           ع
         </span>
         <div>
-          <p className="text-lg font-black text-white">أستاذه حصة</p>
+          <p className="text-lg font-black text-white">استاذة حصه</p>
           <p className="text-xs text-slate-400">تعلم عربي احترافي</p>
         </div>
       </Link>
