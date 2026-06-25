@@ -1,11 +1,12 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Bell,
   BookOpen,
   Bot,
   CalendarDays,
   LayoutDashboard,
+  Map,
   Medal,
   Settings,
   User,
@@ -19,6 +20,7 @@ import type { Profile } from "@/lib/types";
 const iconMap = {
   dashboard: LayoutDashboard,
   assistant: Bot,
+  roadmap: Map,
   lessons: BookOpen,
   live: CalendarDays,
   notifications: Bell,
@@ -33,13 +35,13 @@ export function BrandMark() {
     <Link href="/dashboard" className="flex items-center gap-3">
       <Image
         src="/logo.png"
-        alt="تعلم التداول"
+        alt="وصل للتطور المالي"
         width={44}
         height={44}
         className="h-11 w-11 rounded-2xl bg-white object-contain p-1"
       />
       <div>
-        <p className="text-lg font-black text-white"> وصل للتطور المالي </p>
+        <p className="text-lg font-black text-white">وصل للتطور المالي</p>
         <p className="text-xs text-slate-400">منصة عربية احترافية</p>
       </div>
     </Link>

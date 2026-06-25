@@ -5,7 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatArabicDate(value: string | Date, options?: Intl.DateTimeFormatOptions) {
+export function formatArabicDate(
+  value: string | Date,
+  options?: Intl.DateTimeFormatOptions,
+) {
   return new Intl.DateTimeFormat("ar-EG", {
     dateStyle: "medium",
     timeStyle: "short",

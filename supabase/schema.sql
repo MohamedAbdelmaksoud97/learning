@@ -55,6 +55,8 @@ create table public.lessons (
   level public.user_level not null,
   title text not null,
   description text,
+  summary text,
+  vocabulary jsonb not null default '[]'::jsonb,
   drive_file_id text not null,
   lesson_order integer not null default 1,
   duration_minutes integer,

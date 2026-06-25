@@ -49,7 +49,7 @@ export async function getDashboardData() {
   const supabase = await createClient();
   const levels = getAllowedLevels(profile.level);
 
-  const [attempt, lessons, live, notification] = await Promise.all([
+  const [attempt, lessons, live, notification, progressRows] = await Promise.all([
     supabase
       .from("test_attempts")
       .select("*")
@@ -78,12 +78,20 @@ export async function getDashboardData() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("lesson_progress")
+      .select("completed_at")
+      .eq("user_id", profile.id)
+      .eq("completed", true)
+      .not("completed_at", "is", null)
+      .order("completed_at", { ascending: false }),
   ]);
 
   const totalLessons = lessons.data?.length ?? 0;
   const completedCount =
     lessons.data?.filter((lesson) => lesson.lesson_progress?.[0]?.completed).length ?? 0;
   const nextLesson = lessons.data?.find((lesson) => !lesson.lesson_progress?.[0]?.completed);
+  const completedDates = progressRows.data?.map((row) => row.completed_at as string) ?? [];
 
   return {
     profile,
@@ -92,6 +100,8 @@ export async function getDashboardData() {
     completedCount,
     progress: totalLessons ? Math.round((completedCount / totalLessons) * 100) : 0,
     nextLesson,
+    lessons: lessons.data ?? [],
+    completedDates,
     liveSession: live.data,
     notification: notification.data,
   };

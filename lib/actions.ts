@@ -246,8 +246,54 @@ export async function deleteQuestion(questionId: string) {
   revalidatePath("/placement-test");
 }
 
-export async function saveLesson(_state: ActionState, formData: FormData) {
-  return upsertAdminRow("lessons", formData);
+export async function saveLesson(
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const id = String(formData.get("id") ?? "");
+  const terms = formData
+    .getAll("vocabulary_term")
+    .map((value) => String(value).trim());
+  const definitions = formData
+    .getAll("vocabulary_definition")
+    .map((value) => String(value).trim());
+  const vocabulary = terms
+    .map((term, index) => ({
+      term,
+      definition: definitions[index] ?? "",
+    }))
+    .filter((item) => item.term || item.definition);
+
+  const payload = {
+    title: String(formData.get("title") ?? "").trim(),
+    drive_file_id: String(formData.get("drive_file_id") ?? "").trim(),
+    level: String(formData.get("level") ?? "beginner"),
+    lesson_order: Number(formData.get("lesson_order") ?? 1),
+    duration_minutes: formData.get("duration_minutes")
+      ? Number(formData.get("duration_minutes"))
+      : null,
+    description: String(formData.get("description") ?? "").trim() || null,
+    summary: String(formData.get("summary") ?? "").trim() || null,
+    vocabulary,
+    is_active: formData.get("is_active") === "on",
+  };
+
+  if (!payload.title) return { error: "اكتب عنوان الدرس" };
+  if (!payload.drive_file_id) return { error: "أدخل معرف فيديو Google Drive" };
+
+  const query = id
+    ? supabase.from("lessons").update(payload).eq("id", id)
+    : supabase.from("lessons").insert(payload);
+  const { error } = await query;
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/lessons");
+  revalidatePath("/lessons");
+  revalidatePath("/dashboard");
+  revalidatePath("/roadmap");
+  return { success: "تم حفظ الدرس" };
 }
 
 export async function deleteLesson(lessonId: string) {

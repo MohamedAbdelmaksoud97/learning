@@ -34,12 +34,19 @@ export type Lesson = {
   level: Level;
   title: string;
   description: string | null;
+  summary: string | null;
+  vocabulary: LessonVocabularyItem[] | null;
   drive_file_id: string;
   lesson_order: number;
   duration_minutes: number | null;
   is_active: boolean;
   created_at: string;
   lesson_progress?: { completed: boolean; completed_at: string | null }[];
+};
+
+export type LessonVocabularyItem = {
+  term: string;
+  definition: string;
 };
 
 export type LessonQuestionOption = {

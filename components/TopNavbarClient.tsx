@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Bell,
   BookOpen,
@@ -9,6 +9,7 @@ import {
   CalendarDays,
   LayoutDashboard,
   LogOut,
+  Map,
   Medal,
   Menu,
   Settings,
@@ -25,6 +26,7 @@ import type { Profile } from "@/lib/types";
 const iconMap = {
   dashboard: LayoutDashboard,
   assistant: Bot,
+  roadmap: Map,
   lessons: BookOpen,
   live: CalendarDays,
   notifications: Bell,
@@ -78,16 +80,13 @@ export function TopNavbarClient({
           <div className="mb-3 flex items-center gap-3 border-b border-slate-800 px-2 pb-3">
             <Image
               src="/logo.png"
-              alt="تعلم التداول"
+              alt="وصل للتطور المالي"
               width={40}
               height={40}
               className="h-10 w-10 rounded-xl bg-white object-contain p-1"
             />
             <div>
-              <p className="text-sm font-black text-white">
-                {" "}
-                وصل للتطور المالي{" "}
-              </p>
+              <p className="text-sm font-black text-white">وصل للتطور المالي</p>
               <p className="text-xs text-slate-400">روابط المنصة</p>
             </div>
           </div>
