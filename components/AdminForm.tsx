@@ -12,6 +12,7 @@ import {
   saveNotification,
   saveSuccessStory,
 } from "@/lib/actions";
+import type { Lesson, LessonVocabularyItem, Level } from "@/lib/types";
 
 const actions = {
   lesson: saveLesson,
@@ -26,16 +27,18 @@ type AdminAction = (state: FormState, payload: FormData) => Promise<FormState>;
 function LevelSelect({
   name = "level",
   required = true,
+  defaultValue = "beginner",
 }: {
   name?: string;
   required?: boolean;
+  defaultValue?: Level;
 }) {
   return (
     <select
       name={name}
       required={required}
       className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 text-sm text-slate-50 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
-      defaultValue="beginner"
+      defaultValue={defaultValue}
     >
       <option value="beginner">مبتدئ</option>
       <option value="advanced">متقدم</option>
@@ -44,8 +47,17 @@ function LevelSelect({
   );
 }
 
-function LessonVocabularyFields() {
-  const [rows, setRows] = useState([{ id: crypto.randomUUID() }]);
+function LessonVocabularyFields({
+  initialVocabulary = [],
+}: {
+  initialVocabulary?: LessonVocabularyItem[] | null;
+}) {
+  const vocabulary = initialVocabulary ?? [];
+  const [rows, setRows] = useState(
+    vocabulary.length
+      ? vocabulary.map((item) => ({ id: crypto.randomUUID(), ...item }))
+      : [{ id: crypto.randomUUID(), term: "", definition: "" }],
+  );
 
   return (
     <div className="space-y-3 md:col-span-2">
@@ -53,7 +65,7 @@ function LessonVocabularyFields() {
         <div>
           <p className="text-sm font-bold text-slate-200">مفردات الدرس</p>
           <p className="mt-1 text-xs text-slate-500">
-            أضف الكلمات المهمة وتعريف كل كلمة ليظهروا داخل صفحة الدرس.
+            أضف الكلمات المهمة وتعريف كل كلمة لتظهر داخل صفحة الدرس.
           </p>
         </div>
         <Button
@@ -61,7 +73,10 @@ function LessonVocabularyFields() {
           variant="secondary"
           size="sm"
           onClick={() =>
-            setRows((current) => [...current, { id: crypto.randomUUID() }])
+            setRows((current) => [
+              ...current,
+              { id: crypto.randomUUID(), term: "", definition: "" },
+            ])
           }
         >
           <Plus className="h-4 w-4" />
@@ -74,8 +89,16 @@ function LessonVocabularyFields() {
           key={row.id}
           className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 md:grid-cols-[1fr_2fr_auto]"
         >
-          <Input name="vocabulary_term" placeholder={`الكلمة ${index + 1}`} />
-          <Input name="vocabulary_definition" placeholder="تعريف الكلمة" />
+          <Input
+            name="vocabulary_term"
+            placeholder={`الكلمة ${index + 1}`}
+            defaultValue={row.term}
+          />
+          <Input
+            name="vocabulary_definition"
+            placeholder="تعريف الكلمة"
+            defaultValue={row.definition}
+          />
           <Button
             type="button"
             variant="danger"
@@ -83,7 +106,7 @@ function LessonVocabularyFields() {
             onClick={() =>
               setRows((current) =>
                 current.length === 1
-                  ? [{ id: crypto.randomUUID() }]
+                  ? [{ id: crypto.randomUUID(), term: "", definition: "" }]
                   : current.filter((item) => item.id !== row.id),
               )
             }
@@ -97,7 +120,13 @@ function LessonVocabularyFields() {
   );
 }
 
-export function AdminForm({ type }: { type: keyof typeof actions }) {
+export function AdminForm({
+  type,
+  lesson,
+}: {
+  type: keyof typeof actions;
+  lesson?: Lesson;
+}) {
   const [state, action, pending] = useActionState<FormState, FormData>(
     actions[type] as AdminAction,
     {},
@@ -106,39 +135,58 @@ export function AdminForm({ type }: { type: keyof typeof actions }) {
   return (
     <Card className="p-5">
       <form action={action} className="grid gap-4 md:grid-cols-2">
+        {type === "lesson" && lesson ? (
+          <input type="hidden" name="id" value={lesson.id} />
+        ) : null}
+
         {type === "lesson" ? (
           <>
-            <Input name="title" placeholder="عنوان الدرس" required />
+            <Input
+              name="title"
+              placeholder="عنوان الدرس"
+              defaultValue={lesson?.title}
+              required
+            />
             <Input
               name="drive_file_id"
               placeholder="Google Drive file ID"
+              defaultValue={lesson?.drive_file_id}
               required
             />
-            <LevelSelect />
+            <LevelSelect defaultValue={lesson?.level ?? "beginner"} />
             <Input
               name="lesson_order"
               type="number"
               placeholder="ترتيب الدرس"
+              defaultValue={lesson?.lesson_order}
               required
             />
             <Input
               name="duration_minutes"
               type="number"
               placeholder="المدة بالدقائق"
+              defaultValue={lesson?.duration_minutes ?? ""}
             />
             <Textarea
               name="description"
               placeholder="وصف قصير يظهر أعلى صفحة الدرس"
+              defaultValue={lesson?.description ?? ""}
               className="md:col-span-2"
             />
             <Textarea
               name="summary"
               placeholder="ملخص الدرس"
+              defaultValue={lesson?.summary ?? ""}
               className="md:col-span-2"
             />
-            <LessonVocabularyFields />
+            <LessonVocabularyFields initialVocabulary={lesson?.vocabulary} />
             <label className="flex items-center gap-2 text-sm text-slate-300">
-              <input name="is_active" type="checkbox" defaultChecked /> نشط
+              <input
+                name="is_active"
+                type="checkbox"
+                defaultChecked={lesson?.is_active ?? true}
+              />{" "}
+              نشط
             </label>
           </>
         ) : null}
@@ -214,7 +262,7 @@ export function AdminForm({ type }: { type: keyof typeof actions }) {
         ) : null}
         <div className="md:col-span-2">
           <Button disabled={pending}>
-            {pending ? "جاري الحفظ..." : "حفظ"}
+            {pending ? "جاري الحفظ..." : lesson ? "تحديث الدرس" : "حفظ"}
           </Button>
         </div>
       </form>
