@@ -15,7 +15,7 @@ import { toggleLessonWatched } from "@/lib/actions";
 import { getProfile } from "@/lib/data";
 import { isLessonUnlocked } from "@/lib/lesson-locks";
 import { createClient } from "@/lib/supabase/server";
-import type { LessonVocabularyItem } from "@/lib/types";
+import type { LessonSummaryLink, LessonVocabularyItem } from "@/lib/types";
 import { getAllowedLevels } from "@/lib/utils";
 
 function normalizeVocabulary(value: unknown): LessonVocabularyItem[] {
@@ -29,6 +29,26 @@ function normalizeVocabulary(value: unknown): LessonVocabularyItem[] {
       return term || definition ? { term, definition } : null;
     })
     .filter(Boolean) as LessonVocabularyItem[];
+}
+
+function normalizeSummaryLinks(value: unknown): LessonSummaryLink[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const record = item as Record<string, unknown>;
+      const label = String(record.label ?? "").trim();
+      const url = String(record.url ?? "").trim();
+      if (!label || !url) return null;
+      try {
+        const parsed = new URL(url);
+        if (!["http:", "https:"].includes(parsed.protocol)) return null;
+        return { label, url };
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean) as LessonSummaryLink[];
 }
 
 function getInitialTab(tab?: string | string[]) {
@@ -70,6 +90,7 @@ export default async function LessonDetailPage(
   const completed = Boolean(lesson.lesson_progress?.[0]?.completed);
   const watched = Boolean(lesson.lesson_progress?.[0]?.watched);
   const vocabulary = normalizeVocabulary(lesson.vocabulary);
+  const summaryLinks = normalizeSummaryLinks(lesson.summary_links);
 
   return (
     <AppShell profile={profile}>
@@ -144,6 +165,7 @@ export default async function LessonDetailPage(
           driveFileId={lesson.drive_file_id}
           durationMinutes={lesson.duration_minutes}
           summary={lesson.summary}
+          summaryLinks={summaryLinks}
           vocabulary={vocabulary}
           initialTab={getInitialTab(searchParams.tab)}
         />

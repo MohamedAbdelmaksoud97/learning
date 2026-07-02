@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Brain, Clock3, FileText, Play } from "lucide-react";
+import { BookOpen, Brain, Clock3, ExternalLink, FileText, Play } from "lucide-react";
 import { useState } from "react";
 import { LessonPlayer } from "@/components/LessonPlayer";
 import { Card } from "@/components/ui/card";
-import type { LessonVocabularyItem } from "@/lib/types";
+import type { LessonSummaryLink, LessonVocabularyItem } from "@/lib/types";
 
 type LessonTab = "video" | "vocabulary" | "summary" | "quiz";
 
@@ -15,6 +15,7 @@ type LessonContentTabsProps = {
   driveFileId: string;
   durationMinutes: number | null;
   summary: string | null;
+  summaryLinks: LessonSummaryLink[];
   vocabulary: LessonVocabularyItem[];
   initialTab?: Exclude<LessonTab, "quiz">;
 };
@@ -32,6 +33,7 @@ export function LessonContentTabs({
   driveFileId,
   durationMinutes,
   summary,
+  summaryLinks,
   vocabulary,
   initialTab = "video",
 }: LessonContentTabsProps) {
@@ -136,6 +138,22 @@ export function LessonContentTabs({
                 لا يوجد ملخص مضاف لهذا الدرس حتى الآن.
               </p>
             )}
+            {summaryLinks.length ? (
+              <div className="mt-6 grid gap-3 md:grid-cols-2">
+                {summaryLinks.map((item, index) => (
+                  <a
+                    key={`${item.url}-${index}`}
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-between gap-3 rounded-2xl border border-sky-400/20 bg-sky-400/10 px-4 py-3 text-sm font-bold text-sky-100 transition hover:border-sky-300/50 hover:bg-sky-400/15"
+                  >
+                    <span className="min-w-0 truncate">{item.label}</span>
+                    <ExternalLink className="h-4 w-4 shrink-0" />
+                  </a>
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

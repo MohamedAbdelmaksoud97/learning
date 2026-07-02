@@ -35,6 +35,7 @@ export type Lesson = {
   title: string;
   description: string | null;
   summary: string | null;
+  summary_links: LessonSummaryLink[] | null;
   vocabulary: LessonVocabularyItem[] | null;
   drive_file_id: string;
   lesson_order: number;
@@ -57,6 +58,11 @@ export type Lesson = {
 export type LessonVocabularyItem = {
   term: string;
   definition: string;
+};
+
+export type LessonSummaryLink = {
+  label: string;
+  url: string;
 };
 
 export type LessonQuestionOption = {

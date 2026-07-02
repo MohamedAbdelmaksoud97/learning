@@ -56,6 +56,7 @@ create table public.lessons (
   title text not null,
   description text,
   summary text,
+  summary_links jsonb not null default '[]'::jsonb,
   vocabulary jsonb not null default '[]'::jsonb,
   drive_file_id text not null,
   lesson_order integer not null default 1,

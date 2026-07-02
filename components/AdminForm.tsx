@@ -12,7 +12,7 @@ import {
   saveNotification,
   saveSuccessStory,
 } from "@/lib/actions";
-import type { Lesson, LessonVocabularyItem, Level } from "@/lib/types";
+import type { Lesson, LessonSummaryLink, LessonVocabularyItem, Level } from "@/lib/types";
 
 const actions = {
   lesson: saveLesson,
@@ -120,6 +120,80 @@ function LessonVocabularyFields({
   );
 }
 
+function SummaryLinkFields({
+  initialLinks = [],
+}: {
+  initialLinks?: LessonSummaryLink[] | null;
+}) {
+  const links = initialLinks ?? [];
+  const [rows, setRows] = useState(
+    links.length
+      ? links.map((item) => ({ id: crypto.randomUUID(), ...item }))
+      : [{ id: crypto.randomUUID(), label: "", url: "" }],
+  );
+
+  return (
+    <div className="space-y-3 md:col-span-2">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-bold text-slate-200">روابط الملخص</p>
+          <p className="mt-1 text-xs text-slate-500">
+            أضف عنوان الرابط والرابط نفسه ليظهروا للطالب داخل تبويب الملخص.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() =>
+            setRows((current) => [
+              ...current,
+              { id: crypto.randomUUID(), label: "", url: "" },
+            ])
+          }
+        >
+          <Plus className="h-4 w-4" />
+          إضافة رابط
+        </Button>
+      </div>
+
+      {rows.map((row, index) => (
+        <div
+          key={row.id}
+          className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 md:grid-cols-[1fr_2fr_auto]"
+        >
+          <Input
+            name="summary_link_label"
+            placeholder={`عنوان الرابط ${index + 1}`}
+            defaultValue={row.label}
+          />
+          <Input
+            name="summary_link_url"
+            type="text"
+            placeholder="https://example.com"
+            defaultValue={row.url}
+          />
+          <Button
+            type="button"
+            variant="danger"
+            size="icon"
+            onClick={() =>
+              setRows((current) =>
+                current.length === 1
+                  ? [{ id: crypto.randomUUID(), label: "", url: "" }]
+                  : current.filter((item) => item.id !== row.id),
+              )
+            }
+            aria-label="حذف الرابط"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AdminForm({
   type,
   lesson,
@@ -179,6 +253,7 @@ export function AdminForm({
               defaultValue={lesson?.summary ?? ""}
               className="md:col-span-2"
             />
+            <SummaryLinkFields initialLinks={lesson?.summary_links} />
             <LessonVocabularyFields initialVocabulary={lesson?.vocabulary} />
             <label className="flex items-center gap-2 text-sm text-slate-300">
               <input

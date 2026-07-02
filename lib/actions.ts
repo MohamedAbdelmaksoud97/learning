@@ -310,6 +310,33 @@ export async function saveLesson(
       definition: definitions[index] ?? "",
     }))
     .filter((item) => item.term || item.definition);
+  const linkLabels = formData
+    .getAll("summary_link_label")
+    .map((value) => String(value).trim());
+  const linkUrls = formData
+    .getAll("summary_link_url")
+    .map((value) => String(value).trim());
+  const summaryLinks = linkLabels
+    .map((label, index) => {
+      const rawUrl = linkUrls[index] ?? "";
+      const url = rawUrl && !/^https?:\/\//i.test(rawUrl) ? `https://${rawUrl}` : rawUrl;
+      return { label, url };
+    })
+    .filter((item) => item.label || item.url);
+
+  const invalidLink = summaryLinks.find((item) => {
+    if (!item.label || !item.url) return true;
+    try {
+      const parsed = new URL(item.url);
+      return !["http:", "https:"].includes(parsed.protocol);
+    } catch {
+      return true;
+    }
+  });
+
+  if (invalidLink) {
+    return { error: "أدخل عنوان ورابط صحيح لكل رابط في الملخص" };
+  }
 
   const payload = {
     title: String(formData.get("title") ?? "").trim(),
@@ -321,6 +348,7 @@ export async function saveLesson(
       : null,
     description: String(formData.get("description") ?? "").trim() || null,
     summary: String(formData.get("summary") ?? "").trim() || null,
+    summary_links: summaryLinks,
     vocabulary,
     is_active: formData.get("is_active") === "on",
   };
