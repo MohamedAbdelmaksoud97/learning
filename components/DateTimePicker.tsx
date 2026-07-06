@@ -3,24 +3,34 @@
 import { useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getSaudiDateParts, SAUDI_TIME_ZONE } from "@/lib/utils";
 
-const weekdays = ["س", "ح", "ن", "ث", "ر", "خ", "ج"];
+const weekdays = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 function pad(value: number) {
   return value.toString().padStart(2, "0");
 }
 
-function toInputValue(date: Date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+function toInputValue(year: number, month: number, day: number, hour: number, minute: number) {
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}`;
+}
+
+function getSaudiMonthLabel(year: number, month: number) {
+  return new Intl.DateTimeFormat("ar-EG", {
+    timeZone: SAUDI_TIME_ZONE,
+    month: "long",
+    year: "numeric",
+  }).format(new Date(Date.UTC(year, month - 1, 15, 12)));
 }
 
 function toArabicDisplay(value: string) {
   if (!value) return "اختر التاريخ والوقت";
-  return new Intl.DateTimeFormat("ar-EG", {
+  const date = new Date(`${value}:00+03:00`);
+  return `${new Intl.DateTimeFormat("ar-EG", {
+    timeZone: SAUDI_TIME_ZONE,
     dateStyle: "full",
     timeStyle: "short",
-  }).format(new Date(value));
+  }).format(date)} بتوقيت السعودية`;
 }
 
 export function DateTimePicker({
@@ -32,41 +42,45 @@ export function DateTimePicker({
   label: string;
   required?: boolean;
 }) {
+  const nowSaudi = useMemo(() => getSaudiDateParts(new Date()), []);
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState("");
-  const [viewDate, setViewDate] = useState(() => new Date());
-  const [hour, setHour] = useState(() => new Date().getHours());
+  const [viewYear, setViewYear] = useState(nowSaudi.year);
+  const [viewMonth, setViewMonth] = useState(nowSaudi.month);
+  const [hour, setHour] = useState(nowSaudi.hour);
   const [minute, setMinute] = useState(0);
 
   const days = useMemo(() => {
-    const year = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
-    const offset = first.getDay();
+    const daysInMonth = new Date(Date.UTC(viewYear, viewMonth, 0, 12)).getUTCDate();
+    const offset = new Date(Date.UTC(viewYear, viewMonth - 1, 1, 12)).getUTCDay();
     return [
       ...Array.from({ length: offset }, () => null),
-      ...Array.from({ length: last.getDate() }, (_, index) => new Date(year, month, index + 1)),
+      ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
     ];
-  }, [viewDate]);
+  }, [viewMonth, viewYear]);
 
-  const monthLabel = new Intl.DateTimeFormat("ar-EG", {
-    month: "long",
-    year: "numeric",
-  }).format(viewDate);
+  const monthLabel = getSaudiMonthLabel(viewYear, viewMonth);
 
-  function selectDay(day: Date) {
-    const next = new Date(day);
-    next.setHours(hour, minute, 0, 0);
-    setSelected(toInputValue(next));
+  function moveMonth(direction: 1 | -1) {
+    const next = new Date(Date.UTC(viewYear, viewMonth - 1 + direction, 1, 12));
+    setViewYear(next.getUTCFullYear());
+    setViewMonth(next.getUTCMonth() + 1);
+  }
+
+  function selectDay(day: number) {
+    setSelected(toInputValue(viewYear, viewMonth, day, hour, minute));
   }
 
   function updateTime(nextHour: number, nextMinute: number) {
     setHour(nextHour);
     setMinute(nextMinute);
-    const base = selected ? new Date(selected) : new Date(viewDate);
-    base.setHours(nextHour, nextMinute, 0, 0);
-    setSelected(toInputValue(base));
+    if (!selected) return;
+    const base = {
+      year: Number(selected.slice(0, 4)),
+      month: Number(selected.slice(5, 7)),
+      day: Number(selected.slice(8, 10)),
+    };
+    setSelected(toInputValue(base.year, base.month, base.day, nextHour, nextMinute));
   }
 
   return (
@@ -86,12 +100,15 @@ export function DateTimePicker({
 
       {open ? (
         <div className="absolute z-40 mt-3 w-full min-w-[320px] rounded-2xl border border-slate-700 bg-[#0F172A] p-4 shadow-2xl shadow-slate-950/60">
+          <div className="mb-3 rounded-xl border border-sky-400/20 bg-sky-400/10 px-3 py-2 text-xs font-bold text-sky-100">
+            جميع الأوقات هنا بتوقيت السعودية
+          </div>
           <div className="flex items-center justify-between">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}
+              onClick={() => moveMonth(1)}
               aria-label="الشهر التالي"
             >
               <ChevronRight className="h-5 w-5" />
@@ -101,21 +118,21 @@ export function DateTimePicker({
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}
+              onClick={() => moveMonth(-1)}
               aria-label="الشهر السابق"
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
           </div>
 
-          <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500">
+          <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
             {weekdays.map((day) => (
-              <span key={day}>{day}</span>
+              <span key={day}>{day.slice(0, 3)}</span>
             ))}
           </div>
           <div className="mt-2 grid grid-cols-7 gap-1">
             {days.map((day, index) => {
-              const value = day ? toInputValue(new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, minute)) : "";
+              const value = day ? toInputValue(viewYear, viewMonth, day, hour, minute) : "";
               const isSelected = selected.slice(0, 10) === value.slice(0, 10);
               return day ? (
                 <button
@@ -127,7 +144,7 @@ export function DateTimePicker({
                     isSelected ? "bg-blue-600 text-white shadow-lg shadow-blue-950/30" : "text-slate-300",
                   )}
                 >
-                  {day.getDate()}
+                  {day}
                 </button>
               ) : (
                 <span key={`empty-${index}`} />
@@ -168,7 +185,7 @@ export function DateTimePicker({
           </div>
 
           <Button type="button" className="mt-4 w-full" onClick={() => setOpen(false)}>
-            تأكيد الموعد
+            تأكيد الموعد بتوقيت السعودية
           </Button>
         </div>
       ) : null}

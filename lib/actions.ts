@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { calculateLevel, formatArabicDate } from "@/lib/utils";
+import { calculateLevel, formatArabicDate, parseSaudiDateTimeToUtcIso } from "@/lib/utils";
 import { getProfile, requireAdmin, requireUser } from "@/lib/data";
 import type { LessonQuestion, Question } from "@/lib/types";
 
@@ -232,7 +232,7 @@ async function upsertAdminRow(table: string, formData: FormData) {
     if (payload[key] === "") payload[key] = null;
     if (payload[key] === "on") payload[key] = true;
     if ((key === "start_time" || key === "end_time") && typeof payload[key] === "string") {
-      payload[key] = new Date(payload[key]).toISOString();
+      payload[key] = parseSaudiDateTimeToUtcIso(payload[key]);
     }
   });
 
@@ -441,11 +441,17 @@ export async function saveLiveSession(_state: ActionState, formData: FormData) {
     if (payload[key] === "") payload[key] = null;
     if (payload[key] === "on") payload[key] = true;
     if ((key === "start_time" || key === "end_time") && typeof payload[key] === "string") {
-      payload[key] = new Date(payload[key]).toISOString();
+      payload[key] = parseSaudiDateTimeToUtcIso(payload[key]);
     }
   });
   payload.applies_to_all = formData.get("applies_to_all") === "on";
   if (payload.applies_to_all && !payload.level) payload.level = "beginner";
+  if (!payload.start_time || !payload.end_time) {
+    return { error: "حدد وقت بداية ونهاية الحصة بتوقيت السعودية" };
+  }
+  if (new Date(String(payload.end_time)).getTime() <= new Date(String(payload.start_time)).getTime()) {
+    return { error: "وقت نهاية الحصة يجب أن يكون بعد وقت البداية" };
+  }
 
   if (id) {
     const { error } = await supabase.from("live_sessions").update(payload).eq("id", id);

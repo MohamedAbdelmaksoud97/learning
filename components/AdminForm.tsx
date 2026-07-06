@@ -280,6 +280,9 @@ export function AdminForm({
               <input name="applies_to_all" type="checkbox" /> متاحة لكل
               المستويات
             </label>
+            <div className="rounded-xl border border-sky-400/20 bg-sky-400/10 px-4 py-3 text-sm font-bold text-sky-100 md:col-span-2">
+              جميع مواعيد الحصص يتم إدخالها وعرضها بتوقيت السعودية.
+            </div>
             <DateTimePicker name="start_time" label="وقت بداية الحصة" required />
             <DateTimePicker name="end_time" label="وقت نهاية الحصة" required />
             <Input name="live_url" placeholder="رابط البث المباشر" />

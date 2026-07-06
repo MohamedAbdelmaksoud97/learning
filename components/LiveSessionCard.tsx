@@ -52,6 +52,7 @@ export function LiveSessionCard({ session, now }: { session: LiveSession; now: n
           <p className="text-slate-300">
             {formatArabicDate(session.start_time)} - {formatArabicDate(session.end_time)}
           </p>
+          <p className="text-xs font-bold text-sky-300">بتوقيت السعودية</p>
           <p className="text-slate-400">المدرب: {session.instructor_name || "سيتم التحديد"}</p>
         </div>
 

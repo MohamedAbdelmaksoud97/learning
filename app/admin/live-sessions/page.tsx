@@ -18,7 +18,9 @@ export default async function AdminLiveSessionsPage() {
   return (
     <AppShell profile={profile}>
       <h1 className="text-3xl font-black">إدارة الحصص المباشرة</h1>
-      <p className="mt-3 text-slate-400">أضف وقت الحصة ورابط البث. يمكنك جعل الحصة متاحة لكل المستويات.</p>
+      <p className="mt-3 text-slate-400">
+        أضف وقت الحصة ورابط البث. يمكنك جعل الحصة متاحة لكل المستويات. كل الأوقات هنا بتوقيت السعودية.
+      </p>
       <div className="mt-6">
         <AdminForm type="live" />
       </div>
@@ -36,7 +38,7 @@ export default async function AdminLiveSessionsPage() {
                   </span>
                 </div>
                 <h2 className="mt-3 text-xl font-black">{session.title}</h2>
-                <p className="mt-2 text-sm text-slate-400">{formatArabicDate(session.start_time)}</p>
+                <p className="mt-2 text-sm text-slate-400">{formatArabicDate(session.start_time)} بتوقيت السعودية</p>
               </div>
               <DeleteButton action={deleteLiveSession.bind(null, session.id)} label="حذف الحصة" />
             </div>

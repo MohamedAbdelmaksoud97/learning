@@ -6,7 +6,13 @@ import { Card } from "@/components/ui/card";
 import { getProfile } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 import type { LiveSession } from "@/lib/types";
-import { formatArabicDate, getAllowedLevels } from "@/lib/utils";
+import {
+  formatArabicDate,
+  getAllowedLevels,
+  getSaudiDateKey,
+  getSaudiDateParts,
+  SAUDI_TIME_ZONE,
+} from "@/lib/utils";
 
 const weekDays = [
   "الأحد",
@@ -18,20 +24,10 @@ const weekDays = [
   "السبت",
 ];
 
-function isSameDay(first: Date, second: Date) {
-  return (
-    first.getFullYear() === second.getFullYear() &&
-    first.getMonth() === second.getMonth() &&
-    first.getDate() === second.getDate()
-  );
-}
-
 function buildCalendarDays(referenceDate: Date) {
-  const year = referenceDate.getFullYear();
-  const month = referenceDate.getMonth();
-  const firstDay = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const leadingDays = firstDay.getDay();
+  const { year, month } = getSaudiDateParts(referenceDate);
+  const daysInMonth = new Date(Date.UTC(year, month, 0, 12)).getUTCDate();
+  const leadingDays = new Date(Date.UTC(year, month - 1, 1, 12)).getUTCDay();
 
   return [
     ...Array.from({ length: leadingDays }, (_, index) => ({
@@ -40,7 +36,7 @@ function buildCalendarDays(referenceDate: Date) {
     })),
     ...Array.from({ length: daysInMonth }, (_, index) => ({
       key: `day-${index + 1}`,
-      date: new Date(year, month, index + 1),
+      date: new Date(Date.UTC(year, month - 1, index + 1, 12)),
     })),
   ];
 }
@@ -54,9 +50,11 @@ function LiveSessionsCalendar({
 }) {
   const calendarDays = buildCalendarDays(now);
   const monthLabel = new Intl.DateTimeFormat("ar-EG", {
+    timeZone: SAUDI_TIME_ZONE,
     month: "long",
     year: "numeric",
   }).format(now);
+  const todayKey = getSaudiDateKey(now);
 
   return (
     <Card className="mt-8 overflow-hidden p-5">
@@ -90,10 +88,9 @@ function LiveSessionsCalendar({
             );
           }
 
-          const daySessions = sessions.filter((session) =>
-            isSameDay(new Date(session.start_time), date),
-          );
-          const isToday = isSameDay(date, now);
+          const dateKey = getSaudiDateKey(date);
+          const daySessions = sessions.filter((session) => getSaudiDateKey(session.start_time) === dateKey);
+          const isToday = dateKey === todayKey;
 
           return (
             <div
@@ -108,7 +105,7 @@ function LiveSessionsCalendar({
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-black text-white">
-                  {date.getDate()}
+                  {date.getUTCDate()}
                 </span>
                 {daySessions.length ? (
                   <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[10px] font-black text-white">
@@ -169,7 +166,7 @@ export default async function LiveSessionsPage() {
       <h1 className="text-3xl font-black">الحصص المباشرة</h1>
       <p className="mt-3 max-w-3xl text-slate-400">
         تقويم واضح لكل الحصص القادمة وروابط الانضمام. يظهر العد التنازلي تلقائيا
-        .عندما يتبقى أقل من 24 ساعة على بداية الحصة.
+        .عندما يتبقى أقل من 24 ساعة على بداية الحصة. كل الأوقات المعروضة بتوقيت السعودية.
       </p>
 
       {sessions.length ? (
