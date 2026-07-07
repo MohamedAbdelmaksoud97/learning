@@ -12,7 +12,7 @@ import {
   saveNotification,
   saveSuccessStory,
 } from "@/lib/actions";
-import type { Lesson, LessonSummaryLink, LessonVocabularyItem, Level } from "@/lib/types";
+import type { Lesson, LessonSummaryLink, LessonVocabularyItem, Level, SuccessStory } from "@/lib/types";
 
 const actions = {
   lesson: saveLesson,
@@ -197,9 +197,11 @@ function SummaryLinkFields({
 export function AdminForm({
   type,
   lesson,
+  story,
 }: {
   type: keyof typeof actions;
   lesson?: Lesson;
+  story?: SuccessStory;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(
     actions[type] as AdminAction,
@@ -211,6 +213,9 @@ export function AdminForm({
       <form action={action} className="grid gap-4 md:grid-cols-2">
         {type === "lesson" && lesson ? (
           <input type="hidden" name="id" value={lesson.id} />
+        ) : null}
+        {type === "story" && story ? (
+          <input type="hidden" name="id" value={story.id} />
         ) : null}
 
         {type === "lesson" ? (
@@ -314,18 +319,43 @@ export function AdminForm({
 
         {type === "story" ? (
           <>
-            <Input name="student_name" placeholder="اسم الطالب" required />
-            <Input name="title" placeholder="عنوان القصة" required />
-            <Input name="score" type="number" placeholder="النتيجة" />
-            <Input name="image_url" placeholder="رابط الصورة" />
+            <Input
+              name="student_name"
+              placeholder="اسم الطالب"
+              defaultValue={story?.student_name ?? ""}
+              required
+            />
+            <Input
+              name="title"
+              placeholder="عنوان القصة"
+              defaultValue={story?.title ?? ""}
+              required
+            />
+            <Input
+              name="score"
+              type="number"
+              placeholder="النتيجة"
+              defaultValue={story?.score ?? ""}
+            />
+            <Input
+              name="image_url"
+              placeholder="رابط الصورة"
+              defaultValue={story?.image_url ?? ""}
+            />
             <Textarea
               name="description"
               placeholder="القصة"
+              defaultValue={story?.description ?? ""}
               className="md:col-span-2"
               required
             />
             <label className="flex items-center gap-2 text-sm text-slate-300">
-              <input name="is_published" type="checkbox" /> منشورة
+              <input
+                name="is_published"
+                type="checkbox"
+                defaultChecked={story?.is_published ?? false}
+              />{" "}
+              منشورة
             </label>
           </>
         ) : null}
@@ -340,7 +370,13 @@ export function AdminForm({
         ) : null}
         <div className="md:col-span-2">
           <Button disabled={pending}>
-            {pending ? "جاري الحفظ..." : lesson ? "تحديث الدرس" : "حفظ"}
+            {pending
+              ? "جاري الحفظ..."
+              : lesson
+                ? "تحديث الدرس"
+                : story
+                  ? "تحديث القصة"
+                  : "حفظ"}
           </Button>
         </div>
       </form>

@@ -515,7 +515,41 @@ export async function saveNotification(_state: ActionState, formData: FormData) 
 }
 
 export async function saveSuccessStory(_state: ActionState, formData: FormData) {
-  return upsertAdminRow("success_stories", formData);
+  await requireAdmin();
+  const supabase = await createClient();
+  const id = String(formData.get("id") ?? "");
+  const payload = {
+    student_name: String(formData.get("student_name") ?? "").trim(),
+    title: String(formData.get("title") ?? "").trim(),
+    score: formData.get("score") ? Number(formData.get("score")) : null,
+    image_url: String(formData.get("image_url") ?? "").trim() || null,
+    description: String(formData.get("description") ?? "").trim(),
+    is_published: formData.get("is_published") === "on",
+  };
+
+  if (!payload.student_name) return { error: "اكتب اسم الطالب" };
+  if (!payload.title) return { error: "اكتب عنوان القصة" };
+  if (!payload.description) return { error: "اكتب نص القصة" };
+
+  const query = id
+    ? supabase.from("success_stories").update(payload).eq("id", id)
+    : supabase.from("success_stories").insert(payload);
+  const { error } = await query;
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/success-stories");
+  revalidatePath("/success-stories");
+  revalidatePath("/");
+  return { success: id ? "تم تحديث القصة" : "تم حفظ القصة" };
+}
+
+export async function deleteSuccessStory(storyId: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+  await supabase.from("success_stories").delete().eq("id", storyId);
+  revalidatePath("/admin/success-stories");
+  revalidatePath("/success-stories");
+  revalidatePath("/");
 }
 
 export async function updateProfile(_state: ActionState, formData: FormData): Promise<ActionState> {

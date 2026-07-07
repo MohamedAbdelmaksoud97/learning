@@ -1,15 +1,16 @@
 import { AppShell } from "@/components/AppShell";
 import { AdminForm } from "@/components/AdminForm";
-import { AdminTable } from "@/components/AdminTable";
+import { AdminSuccessStoriesManager } from "@/components/AdminSuccessStoriesManager";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/data";
+import type { SuccessStory } from "@/lib/types";
 
 export default async function AdminSuccessStoriesPage() {
   const profile = await requireAdmin();
   const supabase = await createClient();
   const { data } = await supabase
     .from("success_stories")
-    .select("id,student_name,title,description,score,image_url,is_published,created_at")
+    .select("*")
     .order("created_at", { ascending: false });
 
   return (
@@ -18,7 +19,7 @@ export default async function AdminSuccessStoriesPage() {
       <div className="mt-6">
         <AdminForm type="story" />
       </div>
-      <AdminTable title="القصص" rows={data ?? []} />
+      <AdminSuccessStoriesManager stories={(data ?? []) as SuccessStory[]} />
     </AppShell>
   );
 }
