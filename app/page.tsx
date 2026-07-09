@@ -4,7 +4,9 @@ import {
   BarChart3,
   BookOpenCheck,
   CalendarDays,
+  Gem,
   LineChart,
+  Medal,
   ShieldCheck,
 } from "lucide-react";
 import { SuccessStoryCard } from "@/components/SuccessStoryCard";
@@ -37,11 +39,30 @@ const stats = [
   ["24/7", "وصول للمنصة"],
 ];
 
+const subscriptionPackages = [
+  {
+    title: "الباقة الالماسية",
+    description: "تجربة تعليمية موسعة لمن يريد متابعة أعمق ومسارا أكثر كثافة.",
+    href: "https://thewtofficial.com/%D8%A7%D9%84%D8%A8%D8%A7%D9%82%D8%A9-%D8%A7%D9%84%D8%A7%D9%84%D9%85%D8%A7%D8%B3%D9%8A%D8%A9/p925399206",
+    icon: Gem,
+    tone: "from-sky-400/25 to-blue-600/10",
+    badge: "الأكثر تميزا",
+  },
+  {
+    title: "الباقة البرونزية",
+    description: "اختيار مناسب للبدء في رحلة منظمة داخل المنصة.",
+    href: "https://thewtofficial.com/%D8%A7%D9%84%D8%A8%D8%A7%D9%82%D8%A9-%D8%A7%D9%84%D8%A8%D8%B1%D9%88%D9%86%D8%B2%D9%8A%D8%A9/p7771254",
+    icon: Medal,
+    tone: "from-amber-400/20 to-orange-700/10",
+    badge: "ابدأ الآن",
+  },
+];
+
 export default async function Home() {
   const supabase = await createClient();
   const { data: stories } = await supabase
     .from("success_stories")
-    .select("id,student_name,title,description,score,image_url,is_published,created_at")
+    .select("*")
     .eq("is_published", true)
     .order("created_at", { ascending: false })
     .limit(3);
@@ -162,6 +183,40 @@ export default async function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-5 pb-12">
+        <div className="mb-6">
+          <p className="text-sm font-bold text-sky-300">باقات الاشتراك</p>
+          <h2 className="mt-2 text-3xl font-black text-white">اختر الباقة المناسبة لك</h2>
+        </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          {subscriptionPackages.map((item) => (
+            <div
+              key={item.title}
+              className={`rounded-3xl border border-slate-800 bg-gradient-to-br ${item.tone} p-6 shadow-2xl shadow-blue-950/20 transition hover:-translate-y-1 hover:border-sky-400/40`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-slate-950/60 text-sky-200">
+                  <item.icon className="h-6 w-6" />
+                </span>
+                <span className="rounded-full border border-sky-400/30 bg-sky-400/10 px-3 py-1 text-xs font-bold text-sky-100">
+                  {item.badge}
+                </span>
+              </div>
+              <h3 className="mt-6 text-2xl font-black text-white">{item.title}</h3>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">{item.description}</p>
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className={`${buttonClassName("default")} mt-6`}
+              >
+                اشترك الآن
+              </a>
+            </div>
+          ))}
         </div>
       </section>
 

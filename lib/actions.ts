@@ -522,6 +522,7 @@ export async function saveSuccessStory(_state: ActionState, formData: FormData) 
     student_name: String(formData.get("student_name") ?? "").trim(),
     title: String(formData.get("title") ?? "").trim(),
     score: formData.get("score") ? Number(formData.get("score")) : null,
+    score_currency: String(formData.get("score_currency") ?? "SAR") === "USD" ? "USD" : "SAR",
     image_url: String(formData.get("image_url") ?? "").trim() || null,
     description: String(formData.get("description") ?? "").trim(),
     is_published: formData.get("is_published") === "on",

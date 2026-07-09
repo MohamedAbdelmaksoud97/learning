@@ -7,6 +7,16 @@ import { Card } from "@/components/ui/card";
 import { deleteSuccessStory } from "@/lib/actions";
 import type { SuccessStory } from "@/lib/types";
 
+function formatStoryAmount(story: SuccessStory) {
+  if (story.score === null) return null;
+  const currency = story.score_currency === "USD" ? "USD" : "SAR";
+  return new Intl.NumberFormat("ar-SA", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(story.score);
+}
+
 export function AdminSuccessStoriesManager({
   stories,
 }: {
@@ -29,9 +39,9 @@ export function AdminSuccessStoriesManager({
                   >
                     {story.is_published ? "منشورة" : "غير منشورة"}
                   </span>
-                  {story.score !== null ? (
+                  {formatStoryAmount(story) ? (
                     <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">
-                      النتيجة {story.score}
+                      المبلغ {formatStoryAmount(story)}
                     </span>
                   ) : null}
                 </div>

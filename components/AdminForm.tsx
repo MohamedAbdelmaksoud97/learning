@@ -334,9 +334,17 @@ export function AdminForm({
             <Input
               name="score"
               type="number"
-              placeholder="النتيجة"
+              placeholder="المبلغ"
               defaultValue={story?.score ?? ""}
             />
+            <select
+              name="score_currency"
+              defaultValue={story?.score_currency ?? "SAR"}
+              className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 text-sm text-slate-50 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
+            >
+              <option value="SAR">ريال سعودي</option>
+              <option value="USD">دولار أمريكي</option>
+            </select>
             <Input
               name="image_url"
               placeholder="رابط الصورة"

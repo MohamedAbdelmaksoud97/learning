@@ -118,6 +118,7 @@ export type SuccessStory = {
   before_level: Level | null;
   after_level: Level | null;
   score: number | null;
+  score_currency?: "USD" | "SAR" | null;
   image_url: string | null;
   is_published: boolean;
   created_at: string;

@@ -135,6 +135,7 @@ create table public.success_stories (
   before_level public.user_level,
   after_level public.user_level,
   score integer,
+  score_currency text not null default 'SAR' check (score_currency in ('SAR', 'USD')),
   image_url text,
   is_published boolean not null default false,
   created_at timestamptz not null default now()
