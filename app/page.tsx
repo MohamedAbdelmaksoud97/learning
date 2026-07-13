@@ -64,8 +64,7 @@ export default async function Home() {
     .from("success_stories")
     .select("*")
     .eq("is_published", true)
-    .order("created_at", { ascending: false })
-    .limit(3);
+    .order("created_at", { ascending: false });
 
   const publishedStories = (stories ?? []) as SuccessStory[];
 
