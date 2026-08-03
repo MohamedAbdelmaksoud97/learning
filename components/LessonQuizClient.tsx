@@ -8,6 +8,7 @@ import { AnimatedProgressBar } from "@/components/AnimatedProgressBar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { submitLessonQuiz } from "@/lib/actions";
+import { getLevelLabel } from "@/lib/utils";
 import type { LessonQuestion } from "@/lib/types";
 
 type QuizResult = {
@@ -15,6 +16,7 @@ type QuizResult = {
   total: number;
   percentage: number;
   passed: boolean;
+  promotedLevel?: string | null;
   error?: string;
 };
 
@@ -111,7 +113,9 @@ export function LessonQuizClient({
           </p>
           <p className={passed ? "mt-4 font-bold text-emerald-300" : "mt-4 font-bold text-amber-300"}>
             {passed
-              ? "ممتاز. تم فتح الدرس التالي."
+              ? result?.promotedLevel
+                ? `ممتاز. تم انتقالك إلى مستوى ${getLevelLabel(result.promotedLevel)}.`
+                : "ممتاز. تم فتح الدرس التالي."
               : "يجب الحصول على 100% لفتح الدرس التالي. أعد الاختبار وحاول مرة أخرى."}
           </p>
           {result?.error ? <p className="mt-3 text-sm text-red-300">{result.error}</p> : null}

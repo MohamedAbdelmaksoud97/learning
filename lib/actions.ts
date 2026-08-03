@@ -6,9 +6,14 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { calculateLevel, formatArabicDate, parseSaudiDateTimeToUtcIso } from "@/lib/utils";
 import { getProfile, requireAdmin, requireUser } from "@/lib/data";
-import type { LessonQuestion, Question } from "@/lib/types";
+import type { LessonQuestion, Level, Question } from "@/lib/types";
 
 type ActionState = { error?: string; success?: string };
+
+const nextLevelByLevel: Partial<Record<Level, Level>> = {
+  beginner: "advanced",
+  advanced: "expert",
+};
 
 export async function signUp(_state: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient();
@@ -151,15 +156,27 @@ export async function submitLessonQuiz(lessonId: string, answers: Record<string,
   const user = await requireUser();
   const supabase = await createClient();
 
-  const { data: questions, error } = await supabase
-    .from("lesson_questions")
-    .select("*, options:lesson_question_options(*)")
-    .eq("lesson_id", lessonId)
-    .eq("is_active", true)
-    .order("question_order");
+  const [profileResult, lessonResult, questionsResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("level")
+      .eq("id", user.id)
+      .single<{ level: Level | null }>(),
+    supabase
+      .from("lessons")
+      .select("id,level")
+      .eq("id", lessonId)
+      .single<{ id: string; level: Level }>(),
+    supabase
+      .from("lesson_questions")
+      .select("*, options:lesson_question_options(*)")
+      .eq("lesson_id", lessonId)
+      .eq("is_active", true)
+      .order("question_order"),
+  ]);
 
-  const activeQuestions = (questions ?? []) as LessonQuestion[];
-  if (error || !activeQuestions.length) {
+  const activeQuestions = (questionsResult.data ?? []) as LessonQuestion[];
+  if (questionsResult.error || lessonResult.error || !lessonResult.data || !activeQuestions.length) {
     return { error: "لا توجد أسئلة متاحة لهذا الدرس حالياً" };
   }
 
@@ -199,13 +216,45 @@ export async function submitLessonQuiz(lessonId: string, answers: Record<string,
     { onConflict: "user_id,lesson_id" },
   );
 
+  let promotedLevel: Level | null = null;
+  const currentLevel = profileResult.data?.level;
+  const lessonLevel = lessonResult.data.level;
+  const nextLevel = currentLevel ? nextLevelByLevel[currentLevel] : null;
+
+  if (shouldComplete && currentLevel && nextLevel && lessonLevel === currentLevel) {
+    const { data: currentLevelLessons } = await supabase
+      .from("lessons")
+      .select("id, lesson_progress(completed)")
+      .eq("level", currentLevel)
+      .eq("is_active", true);
+
+    const allCurrentLevelLessonsCompleted = Boolean(
+      currentLevelLessons?.length &&
+        currentLevelLessons.every((lesson) =>
+          lesson.lesson_progress?.some((progress) => progress.completed),
+        ),
+    );
+
+    if (allCurrentLevelLessonsCompleted) {
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ level: nextLevel })
+        .eq("id", user.id);
+
+      if (!profileError) {
+        promotedLevel = nextLevel;
+      }
+    }
+  }
+
   revalidatePath("/lessons");
   revalidatePath(`/lessons/${lessonId}`);
   revalidatePath(`/lessons/${lessonId}/quiz`);
   revalidatePath("/dashboard");
   revalidatePath("/roadmap");
+  revalidatePath("/profile");
 
-  return { score, total, percentage, passed: shouldComplete };
+  return { score, total, percentage, passed: shouldComplete, promotedLevel };
 }
 
 export async function markNotificationRead(id: string) {
