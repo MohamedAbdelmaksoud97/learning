@@ -6,7 +6,7 @@ import { AdminForm } from "@/components/AdminForm";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { deleteLesson } from "@/lib/actions";
-import { cn, getLevelLabel } from "@/lib/utils";
+import { cn, getContentPackageScopeLabel, getLevelLabel } from "@/lib/utils";
 import type { Lesson, Level } from "@/lib/types";
 
 const levels: Level[] = ["beginner", "advanced", "expert"];
@@ -51,6 +51,9 @@ export function AdminLessonTabs({ lessons }: { lessons: Lesson[] }) {
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-300">
                     ترتيب {lesson.lesson_order}
+                  </span>
+                  <span className="rounded-full bg-amber-400/10 px-3 py-1 font-bold text-amber-200">
+                    {getContentPackageScopeLabel(lesson.package_access)}
                   </span>
                   <span
                     className={

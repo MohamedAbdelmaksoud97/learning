@@ -22,6 +22,19 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         {mode === "signup" ? <Input name="full_name" placeholder="الاسم الكامل" required /> : null}
         <Input name="email" type="email" placeholder="البريد الإلكتروني" required />
         <Input name="password" type="password" placeholder="كلمة المرور" required minLength={6} />
+        {mode === "signup" ? (
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-300">باقة العضو</label>
+            <select
+              name="subscription_package"
+              defaultValue="bronze"
+              className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 text-sm text-slate-50 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
+            >
+              <option value="bronze">الباقة البرونزية</option>
+              <option value="diamond">الباقة الماسية</option>
+            </select>
+          </div>
+        ) : null}
         {state?.error ? <p className="text-sm text-red-300">{state.error}</p> : null}
         {state?.success ? <p className="text-sm text-emerald-300">{state.success}</p> : null}
         <Button className="w-full" disabled={pending}>

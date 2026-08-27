@@ -12,7 +12,15 @@ import {
   saveNotification,
   saveSuccessStory,
 } from "@/lib/actions";
-import type { Lesson, LessonSummaryLink, LessonVocabularyItem, Level, SuccessStory } from "@/lib/types";
+import type {
+  ContentPackageScope,
+  Lesson,
+  LessonSummaryLink,
+  LessonVocabularyItem,
+  Level,
+  Profile,
+  SuccessStory,
+} from "@/lib/types";
 
 const actions = {
   lesson: saveLesson,
@@ -23,6 +31,7 @@ const actions = {
 
 type FormState = { error?: string; success?: string };
 type AdminAction = (state: FormState, payload: FormData) => Promise<FormState>;
+const selectClassName = "h-11 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 text-sm text-slate-50 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20";
 
 function LevelSelect({
   name = "level",
@@ -37,13 +46,30 @@ function LevelSelect({
     <select
       name={name}
       required={required}
-      className="h-11 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 text-sm text-slate-50 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20"
+      className={selectClassName}
       defaultValue={defaultValue}
     >
       <option value="beginner">مبتدئ</option>
       <option value="advanced">متقدم</option>
       <option value="expert">خبير</option>
     </select>
+  );
+}
+
+function PackageScopeSelect({
+  defaultValue = "both",
+}: {
+  defaultValue?: ContentPackageScope;
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-bold text-slate-300">الباقة المستهدفة</label>
+      <select name="package_access" defaultValue={defaultValue} className={selectClassName} required>
+        <option value="bronze">الباقة البرونزية</option>
+        <option value="diamond">الباقة الماسية</option>
+        <option value="both">كلا الباقتين</option>
+      </select>
+    </div>
   );
 }
 
@@ -198,11 +224,14 @@ export function AdminForm({
   type,
   lesson,
   story,
+  notificationRecipients = [],
 }: {
   type: keyof typeof actions;
   lesson?: Lesson;
   story?: SuccessStory;
+  notificationRecipients?: Pick<Profile, "id" | "full_name" | "email" | "subscription_package">[];
 }) {
+  const [notificationAudience, setNotificationAudience] = useState<"user" | "package">("user");
   const [state, action, pending] = useActionState<FormState, FormData>(
     actions[type] as AdminAction,
     {},
@@ -233,6 +262,7 @@ export function AdminForm({
               required
             />
             <LevelSelect defaultValue={lesson?.level ?? "beginner"} />
+            <PackageScopeSelect defaultValue={lesson?.package_access ?? "both"} />
             <Input
               name="lesson_order"
               type="number"
@@ -281,6 +311,7 @@ export function AdminForm({
               </label>
               <LevelSelect />
             </div>
+            <PackageScopeSelect />
             <label className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-sm font-bold text-slate-300">
               <input name="applies_to_all" type="checkbox" /> متاحة لكل
               المستويات
@@ -305,7 +336,40 @@ export function AdminForm({
 
         {type === "notification" ? (
           <>
-            <Input name="user_id" placeholder="معرف المستخدم" required />
+            <div>
+              <label className="mb-2 block text-sm font-bold text-slate-300">نوع الجمهور</label>
+              <select
+                name="audience_type"
+                value={notificationAudience}
+                onChange={(event) => setNotificationAudience(event.target.value as "user" | "package")}
+                className={selectClassName}
+              >
+                <option value="user">عضو محدد</option>
+                <option value="package">باقة كاملة</option>
+              </select>
+            </div>
+            {notificationAudience === "user" ? (
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-300">العضو المستهدف</label>
+                <select name="target_user_id" className={selectClassName} required>
+                  <option value="">اختر العضو</option>
+                  {notificationRecipients.map((profile) => (
+                    <option key={profile.id} value={profile.id}>
+                      {profile.full_name || profile.email || profile.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div>
+                <label className="mb-2 block text-sm font-bold text-slate-300">الباقة المستهدفة</label>
+                <select name="target_package" defaultValue="both" className={selectClassName} required>
+                  <option value="bronze">الباقة البرونزية</option>
+                  <option value="diamond">الباقة الماسية</option>
+                  <option value="both">كلا الباقتين</option>
+                </select>
+              </div>
+            )}
             <Input name="title" placeholder="عنوان الإشعار" required />
             <Input name="type" placeholder="النوع" />
             <Input name="link_url" placeholder="رابط اختياري" />

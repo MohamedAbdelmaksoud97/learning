@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { deleteLiveSession } from "@/lib/actions";
 import { requireAdmin } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
-import { formatArabicDate, getLevelLabel } from "@/lib/utils";
+import { formatArabicDate, getContentPackageScopeLabel, getLevelLabel } from "@/lib/utils";
 
 export default async function AdminLiveSessionsPage() {
   const profile = await requireAdmin();
@@ -35,6 +35,9 @@ export default async function AdminLiveSessionsPage() {
                   </span>
                   <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300">
                     {session.is_active ? "نشطة" : "غير نشطة"}
+                  </span>
+                  <span className="rounded-full bg-amber-400/10 px-3 py-1 text-xs font-bold text-amber-200">
+                    {getContentPackageScopeLabel(session.package_access)}
                   </span>
                 </div>
                 <h2 className="mt-3 text-xl font-black">{session.title}</h2>

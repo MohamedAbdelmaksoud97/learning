@@ -3,10 +3,17 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { calculateLevel, formatArabicDate, parseSaudiDateTimeToUtcIso } from "@/lib/utils";
 import { getProfile, requireAdmin, requireUser } from "@/lib/data";
-import type { LessonQuestion, Level, Question } from "@/lib/types";
+import type {
+  ContentPackageScope,
+  LessonQuestion,
+  Level,
+  Question,
+  SubscriptionPackage,
+} from "@/lib/types";
 
 type ActionState = { error?: string; success?: string };
 
@@ -15,17 +22,29 @@ const nextLevelByLevel: Partial<Record<Level, Level>> = {
   advanced: "expert",
 };
 
+function isSubscriptionPackage(value: string): value is SubscriptionPackage {
+  return value === "bronze" || value === "diamond";
+}
+
+function isContentPackageScope(value: string): value is ContentPackageScope {
+  return isSubscriptionPackage(value) || value === "both";
+}
+
 export async function signUp(_state: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient();
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const requestedPackage = String(formData.get("subscription_package") ?? "bronze");
+  const subscriptionPackage: SubscriptionPackage = isSubscriptionPackage(requestedPackage)
+    ? requestedPackage
+    : "bronze";
 
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { full_name: fullName },
+      data: { full_name: fullName, subscription_package: subscriptionPackage },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/auth/callback`,
     },
   });
@@ -50,14 +69,89 @@ export async function signOut() {
   redirect("/");
 }
 
-export async function setAccountActive(userId: string, isActive: boolean) {
+export async function setAccountActive(userId: string, isActive: boolean): Promise<ActionState> {
   const admin = await requireAdmin();
   if (admin.id === userId) {
-    return;
+    return { error: "لا يمكن تغيير حالة حساب المدير الحالي." };
   }
-  const supabase = await createClient();
-  await supabase.from("profiles").update({ is_active: isActive }).eq("id", userId);
-  revalidatePath("/admin/users");
+  try {
+    const supabase = createAdminClient();
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({ is_active: isActive })
+      .eq("id", userId)
+      .eq("role", "student")
+      .select("id")
+      .maybeSingle();
+    if (error) return { error: error.message };
+    if (!data) return { error: "الحساب غير موجود أو أنه حساب إداري محمي." };
+    revalidatePath("/admin/users");
+    return { success: isActive ? "تم تفعيل الحساب." : "تم تعطيل الحساب." };
+  } catch {
+    return { error: "تعذر الاتصال بعميل Supabase الإداري. تحقق من مفتاح الخادم." };
+  }
+}
+
+export async function updateUserSubscriptionPackage(
+  userId: string,
+  _state: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const admin = await requireAdmin();
+  if (admin.id === userId) return { error: "لا يمكن تعديل باقة حساب المدير الحالي." };
+
+  const requestedPackage = String(formData.get("subscription_package") ?? "");
+  if (!isSubscriptionPackage(requestedPackage)) {
+    return { error: "اختر باقة صحيحة." };
+  }
+
+  try {
+    const supabase = createAdminClient();
+    const { data: target, error: targetError } = await supabase
+      .from("profiles")
+      .select("id,role")
+      .eq("id", userId)
+      .maybeSingle<{ id: string; role: string }>();
+
+    if (targetError || !target) return { error: "الحساب المطلوب غير موجود." };
+    if (target.role !== "student") return { error: "الباقات مخصصة لحسابات الأعضاء فقط." };
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ subscription_package: requestedPackage })
+      .eq("id", userId);
+
+    if (error) return { error: error.message };
+    revalidatePath("/admin/users");
+    return { success: "تم تحديث باقة العضو." };
+  } catch {
+    return { error: "تعذر الاتصال بعميل Supabase الإداري. تحقق من مفتاح الخادم." };
+  }
+}
+
+export async function deleteUserAccount(userId: string): Promise<ActionState> {
+  const admin = await requireAdmin();
+  if (admin.id === userId) return { error: "لا يمكن حذف حساب المدير الحالي." };
+
+  try {
+    const supabase = createAdminClient();
+    const { data: target, error: targetError } = await supabase
+      .from("profiles")
+      .select("id,role")
+      .eq("id", userId)
+      .maybeSingle<{ id: string; role: string }>();
+
+    if (targetError || !target) return { error: "الحساب المطلوب غير موجود." };
+    if (target.role !== "student") return { error: "لا يمكن حذف حساب إداري من هذه الواجهة." };
+
+    const { error } = await supabase.auth.admin.deleteUser(userId, false);
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/users");
+    return { success: "تم حذف حساب العضو وبياناته نهائيًا." };
+  } catch {
+    return { error: "تعذر الاتصال بعميل Supabase الإداري. تحقق من مفتاح الخادم." };
+  }
 }
 
 export async function startBeginner() {
@@ -271,29 +365,6 @@ export async function markAllNotificationsRead() {
   revalidatePath("/notifications");
 }
 
-async function upsertAdminRow(table: string, formData: FormData) {
-  await requireAdmin();
-  const supabase = await createClient();
-  const id = String(formData.get("id") ?? "");
-  const payload: Record<string, unknown> = Object.fromEntries(formData.entries());
-  delete payload.id;
-  Object.keys(payload).forEach((key) => {
-    if (payload[key] === "") payload[key] = null;
-    if (payload[key] === "on") payload[key] = true;
-    if ((key === "start_time" || key === "end_time") && typeof payload[key] === "string") {
-      payload[key] = parseSaudiDateTimeToUtcIso(payload[key]);
-    }
-  });
-
-  const query = id
-    ? supabase.from(table).update(payload).eq("id", id)
-    : supabase.from(table).insert(payload);
-  const { error } = await query;
-  if (error) return { error: error.message };
-  revalidatePath("/admin");
-  return { success: "تم الحفظ" };
-}
-
 export async function saveQuestion(_state: ActionState, formData: FormData): Promise<ActionState> {
   await requireAdmin();
   const supabase = await createClient();
@@ -390,6 +461,7 @@ export async function saveLesson(
   const payload = {
     title: String(formData.get("title") ?? "").trim(),
     drive_file_id: String(formData.get("drive_file_id") ?? "").trim(),
+    package_access: String(formData.get("package_access") ?? "both"),
     level: String(formData.get("level") ?? "beginner"),
     lesson_order: Number(formData.get("lesson_order") ?? 1),
     duration_minutes: formData.get("duration_minutes")
@@ -404,6 +476,7 @@ export async function saveLesson(
 
   if (!payload.title) return { error: "اكتب عنوان الدرس" };
   if (!payload.drive_file_id) return { error: "أدخل معرف فيديو Google Drive" };
+  if (!isContentPackageScope(payload.package_access)) return { error: "اختر باقة صحيحة للدرس" };
 
   const query = id
     ? supabase.from("lessons").update(payload).eq("id", id)
@@ -494,6 +567,9 @@ export async function saveLiveSession(_state: ActionState, formData: FormData) {
     }
   });
   payload.applies_to_all = formData.get("applies_to_all") === "on";
+  const packageAccess = String(formData.get("package_access") ?? "both");
+  if (!isContentPackageScope(packageAccess)) return { error: "اختر باقة صحيحة للحصة" };
+  payload.package_access = packageAccess;
   if (payload.applies_to_all && !payload.level) payload.level = "beginner";
   if (!payload.start_time || !payload.end_time) {
     return { error: "حدد وقت بداية ونهاية الحصة بتوقيت السعودية" };
@@ -513,7 +589,7 @@ export async function saveLiveSession(_state: ActionState, formData: FormData) {
   const { data: session, error } = await supabase
     .from("live_sessions")
     .insert(payload)
-    .select("id,title,level,start_time,applies_to_all")
+    .select("id,title,level,start_time,applies_to_all,package_access")
     .single();
 
   if (error || !session) return { error: error?.message ?? "تعذر حفظ الحصة" };
@@ -527,10 +603,20 @@ export async function saveLiveSession(_state: ActionState, formData: FormData) {
         ? ["advanced", "expert"]
         : ["beginner", "advanced", "expert"];
 
-  const profilesQuery = supabase.from("profiles").select("id");
-  const { data: profiles } = session.applies_to_all
-    ? await profilesQuery
-    : await profilesQuery.in("level", allowedLevels);
+  let profilesQuery = supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "student")
+    .eq("is_active", true);
+
+  if (session.package_access !== "both") {
+    profilesQuery = profilesQuery.eq("subscription_package", session.package_access);
+  }
+  if (!session.applies_to_all) {
+    profilesQuery = profilesQuery.in("level", allowedLevels);
+  }
+
+  const { data: profiles } = await profilesQuery;
 
   if (profiles?.length) {
     await supabase.from("notifications").insert(
@@ -560,7 +646,56 @@ export async function deleteLiveSession(sessionId: string) {
 }
 
 export async function saveNotification(_state: ActionState, formData: FormData) {
-  return upsertAdminRow("notifications", formData);
+  await requireAdmin();
+  const supabase = await createClient();
+  const audienceType = String(formData.get("audience_type") ?? "user");
+  const targetUserId = String(formData.get("target_user_id") ?? "");
+  const targetPackage = String(formData.get("target_package") ?? "both");
+  const title = String(formData.get("title") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim() || null;
+  const type = String(formData.get("type") ?? "").trim() || null;
+  const linkUrl = String(formData.get("link_url") ?? "").trim() || null;
+
+  if (!title) return { error: "اكتب عنوان الإشعار" };
+  if (audienceType !== "user" && audienceType !== "package") {
+    return { error: "اختر جمهور الإشعار" };
+  }
+
+  let profilesQuery = supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "student")
+    .eq("is_active", true);
+
+  if (audienceType === "user") {
+    if (!targetUserId) return { error: "اختر العضو المستهدف" };
+    profilesQuery = profilesQuery.eq("id", targetUserId);
+  } else {
+    if (!isContentPackageScope(targetPackage)) return { error: "اختر باقة صحيحة" };
+    if (targetPackage !== "both") {
+      profilesQuery = profilesQuery.eq("subscription_package", targetPackage);
+    }
+  }
+
+  const { data: recipients, error: recipientsError } = await profilesQuery;
+  if (recipientsError) return { error: recipientsError.message };
+  if (!recipients?.length) return { error: "لا يوجد أعضاء نشطون ضمن الجمهور المحدد" };
+
+  const { error } = await supabase.from("notifications").insert(
+    recipients.map((recipient) => ({
+      user_id: recipient.id,
+      title,
+      body,
+      type,
+      link_url: linkUrl,
+    })),
+  );
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/notifications");
+  revalidatePath("/notifications");
+  revalidatePath("/dashboard");
+  return { success: `تم إرسال الإشعار إلى ${recipients.length} عضو.` };
 }
 
 export async function saveSuccessStory(_state: ActionState, formData: FormData) {

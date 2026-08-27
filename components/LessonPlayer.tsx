@@ -5,7 +5,9 @@ export function LessonPlayer({ driveFileId, title }: { driveFileId: string; titl
         title={title}
         src={`https://drive.google.com/file/d/${driveFileId}/preview`}
         className="aspect-video w-full"
-        allow="autoplay; encrypted-media"
+        allow="autoplay; encrypted-media; fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-presentation"
+        referrerPolicy="strict-origin-when-cross-origin"
         allowFullScreen
       />
     </div>

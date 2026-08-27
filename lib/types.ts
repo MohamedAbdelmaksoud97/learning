@@ -1,5 +1,7 @@
 export type Level = "beginner" | "advanced" | "expert";
 export type Role = "student" | "admin";
+export type SubscriptionPackage = "bronze" | "diamond";
+export type ContentPackageScope = SubscriptionPackage | "both";
 
 export type Profile = {
   id: string;
@@ -7,6 +9,7 @@ export type Profile = {
   email: string | null;
   level: Level | null;
   role: Role;
+  subscription_package: SubscriptionPackage;
   is_active: boolean;
   has_completed_placement_test: boolean;
   created_at: string;
@@ -38,6 +41,7 @@ export type Lesson = {
   summary_links: LessonSummaryLink[] | null;
   vocabulary: LessonVocabularyItem[] | null;
   drive_file_id: string;
+  package_access: ContentPackageScope;
   lesson_order: number;
   duration_minutes: number | null;
   is_active: boolean;
@@ -95,6 +99,7 @@ export type LiveSession = {
   end_time: string;
   live_url: string | null;
   replay_url: string | null;
+  package_access: ContentPackageScope;
   is_active: boolean;
   created_at: string;
 };

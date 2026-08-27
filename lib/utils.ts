@@ -63,7 +63,18 @@ export function formatArabicDate(
 export function getLevelLabel(level?: string | null) {
   if (level === "expert") return "خبير";
   if (level === "advanced") return "متقدم";
+  if (!level) return "غير محدد";
   return "مبتدئ";
+}
+
+export function getSubscriptionPackageLabel(value?: string | null) {
+  return value === "diamond" ? "الماسية" : "البرونزية";
+}
+
+export function getContentPackageScopeLabel(value?: string | null) {
+  if (value === "diamond") return "الماسية";
+  if (value === "bronze") return "البرونزية";
+  return "كلا الباقتين";
 }
 
 export function getAllowedLevels(level?: string | null) {
