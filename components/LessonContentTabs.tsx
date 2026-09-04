@@ -12,7 +12,6 @@ type LessonTab = "video" | "vocabulary" | "summary" | "quiz";
 type LessonContentTabsProps = {
   lessonId: string;
   title: string;
-  driveFileId: string;
   durationMinutes: number | null;
   summary: string | null;
   summaryLinks: LessonSummaryLink[];
@@ -30,7 +29,6 @@ const tabs = [
 export function LessonContentTabs({
   lessonId,
   title,
-  driveFileId,
   durationMinutes,
   summary,
   summaryLinks,
@@ -89,7 +87,7 @@ export function LessonContentTabs({
                 {durationMinutes ?? 0} دقيقة
               </span>
             </div>
-            <LessonPlayer driveFileId={driveFileId} title={title} />
+            <LessonPlayer lessonId={lessonId} title={title} />
           </div>
         ) : null}
 
