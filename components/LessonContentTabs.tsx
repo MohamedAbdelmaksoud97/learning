@@ -90,7 +90,7 @@ export function LessonContentTabs({
               </span>
             </div>
             <div className="-mx-3 sm:mx-0">
-              <LessonPlayer driveFileId={driveFileId} title={title} />
+              <LessonPlayer lessonId={lessonId} driveFileId={driveFileId} title={title} />
             </div>
           </div>
         ) : null}
