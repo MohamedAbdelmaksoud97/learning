@@ -79,17 +79,19 @@ export function LessonContentTabs({
         })}
       </div>
 
-      <div className="p-6 md:p-8">
+      <div className="p-3 sm:p-6 md:p-8">
         {activeTab === "video" ? (
           <div>
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <h2 className="text-3xl font-black text-white">شاهد وتعلم</h2>
-              <span className="inline-flex items-center gap-2 rounded-full bg-sky-400/10 px-3 py-1 text-xs font-bold text-sky-200">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-6 sm:gap-4">
+              <h2 className="text-xl font-black text-white sm:text-3xl">شاهد وتعلم</h2>
+              <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-sky-400/10 px-3 py-1 text-xs font-bold text-sky-200">
                 <Clock3 className="h-3 w-3" />
                 {durationMinutes ?? 0} دقيقة
               </span>
             </div>
-            <LessonPlayer driveFileId={driveFileId} title={title} />
+            <div className="-mx-3 sm:mx-0">
+              <LessonPlayer driveFileId={driveFileId} title={title} />
+            </div>
           </div>
         ) : null}
 
