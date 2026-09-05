@@ -4,8 +4,9 @@ export function LessonPlayer({ driveFileId, title }: { driveFileId: string; titl
       <iframe
         title={title}
         src={`https://drive.google.com/file/d/${driveFileId}/preview`}
-        className="absolute left-0 top-0 h-[200%] w-[200%] origin-top-left scale-50 border-0 sm:h-full sm:w-full sm:scale-100"
+        className="absolute inset-0 block h-full w-full border-0"
         allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+        referrerPolicy="strict-origin-when-cross-origin"
         allowFullScreen
       />
     </div>
