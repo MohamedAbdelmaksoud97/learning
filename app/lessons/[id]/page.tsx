@@ -162,6 +162,7 @@ export default async function LessonDetailPage(
         <LessonContentTabs
           lessonId={lesson.id}
           title={lesson.title}
+          driveFileId={lesson.drive_file_id}
           durationMinutes={lesson.duration_minutes}
           summary={lesson.summary}
           summaryLinks={summaryLinks}
